@@ -1,26 +1,3 @@
-// import { NextResponse } from 'next/server';
-// import bcrypt from 'bcryptjs';
-// import User from '../../../models/User';
-// import sequelize from '../../../lib/database';
-
-// export async function GET() {
-//   try {
-//     await sequelize.sync({ alter: true });
-
-//     // create a test user
-//     const hashedPassword = await bcrypt.hash('password123', 10);
-
-//     await User.create({
-//       email: 'admin@test.com',
-//       password: hashedPassword,
-//     });
-
-//     return NextResponse.json({ message: 'User created! email: admin@test.com, pass: password123' });
-//   } catch (error: any) {
-//     return NextResponse.json({ error: error.message }, { status: 500 });
-//   }
-// }
-
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import User from '../../../models/User';
@@ -30,19 +7,37 @@ export async function GET() {
   try {
     await sequelize.sync({ alter: true });
 
-    // check if user already exists
-    const existing = await User.findOne({ where: { email: 'himanshu@test.com' } });
+    const existing = await User.findOne({ where: { email: 'admin@test.com' } });
     if (existing) {
       return NextResponse.json({ message: 'User already exists!' });
     }
 
-    const hashedPassword = await bcrypt.hash('himanshu123', 10);
+    const hashedPassword = await bcrypt.hash('admin@123', 10);
+
+    // await User.create({
+    //   email: 'himanshu@test.com',
+    //   password: hashedPassword,
+    // });
+
     await User.create({
-      email: 'himanshu@test.com',
+      fname: 'Admin',
+      lname: 'Test',
+      phone: '1234567890',
+      email: 'admin@test.com',
       password: hashedPassword,
+      gender: 'male',
+      role: 'admin',
+      address: 'Chennai',
+      isActive: true,
     });
 
-    return NextResponse.json({ message: 'User created! email: himanshu@test.com, pass: himanshu123' });
+    const createdUser = await User.findOne({ where: { email: 'admin@test.com' } });
+
+    return NextResponse.json({
+      message: 'User created!',
+      user: createdUser,
+    });
+
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
