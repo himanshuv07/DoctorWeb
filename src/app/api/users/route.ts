@@ -1,13 +1,12 @@
-// This route handles fetching all users or filtering by role. You can test it by visiting:
-// http://localhost:3000/api/users
-// http://localhost:3000/api/users?role=doctor
-// http://localhost:3000/api/users?count=doctors
+// GET /api/users
+// GET /api/users?role=doctor
+// GET /api/users?count=doctor  (or count=staff, count=admin, count=all)
 
 import { NextRequest, NextResponse } from 'next/server';
 import User from '../../../models/User';
 import sequelize from '../../../lib/database';
 
-const enumRoles = ['doctor', 'staff', 'admin'];
+const VALID_ROLES = ['doctor', 'staff', 'admin'];
 
 export async function GET(req: NextRequest) {
     try {
@@ -17,31 +16,39 @@ export async function GET(req: NextRequest) {
         const role = searchParams.get('role');
         const count = searchParams.get('count');
 
-        if (count === 'doctors') {
-            const doctorsCount = await User.count({ where: { role: 'doctor' } });
-            return NextResponse.json({ count: doctorsCount });
+        // ?count=doctor or ?count=all → return counts
+        if (count) {
+            if (count === 'all') {
+                // Return count for every role at once
+                const counts = await Promise.all(
+                    VALID_ROLES.map(async (r) => ({
+                        role: r,
+                        total: await User.count({ where: { role: r } }),
+                    }))
+                );
+                return NextResponse.json({ counts }, { status: 200 });
+            }
+
+            if (VALID_ROLES.includes(count)) {
+                const total = await User.count({ where: { role: count } });
+                return NextResponse.json({ role: count, total }, { status: 200 });
+            }
+
+            return NextResponse.json({ error: 'Invalid count role.' }, { status: 400 });
         }
 
-        if (count === 'admin') {
-            const adminCount = await User.count({ where: { role: 'admin' } });
-            return NextResponse.json({ count: adminCount });
-        }
-
-        if (count === 'staff') {
-            const staffCount = await User.count({ where: { role: 'staff' } });
-            return NextResponse.json({ count: staffCount });
-        }
-
+        // ?role=doctor → filter by role
         const queryOptions: any = {
+            attributes: { exclude: ['password', 'deletedAt'] },
             order: [['createdAt', 'DESC']],
         };
 
-        if (role && enumRoles.includes(role)) {
+        if (role && VALID_ROLES.includes(role)) {
             queryOptions.where = { role };
         }
 
         const users = await User.findAll(queryOptions);
-        return NextResponse.json({ success: true, users });
+        return NextResponse.json({ total: users.length, users }, { status: 200 });
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

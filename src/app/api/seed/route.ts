@@ -7,7 +7,7 @@ import sequelize from '../../../lib/database';
 
 // ── Validators ──────────────────────────────────────────────
 const VALID_GENDERS = ['male', 'female'] as const;
-const VALID_ROLES   = ['doctor', 'staff', 'admin'] as const;
+const VALID_ROLES = ['doctor', 'staff', 'admin'] as const;
 
 function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -27,28 +27,28 @@ function validateBody(body: any): string[] {
   const errors: string[] = [];
 
   // Required fields
-  if (!body.fname?.trim())               errors.push('fname is required.');
-  if (!body.lname?.trim())               errors.push('lname is required.');
-  if (!body.email?.trim())               errors.push('email is required.');
-  if (!body.password?.trim())            errors.push('password is required.');
-  if (!body.phone?.trim())               errors.push('phone is required.');
-  if (!body.gender)                      errors.push('gender is required.');
-  if (!body.role)                        errors.push('role is required.');
+  if (!body.fname?.trim()) errors.push('fname is required.');
+  if (!body.lname?.trim()) errors.push('lname is required.');
+  if (!body.email?.trim()) errors.push('email is required.');
+  if (!body.password?.trim()) errors.push('password is required.');
+  if (!body.phone?.trim()) errors.push('phone is required.');
+  if (!body.gender) errors.push('gender is required.');
+  if (!body.role) errors.push('role is required.');
 
   // Format checks
-  if (body.email    && !validateEmail(body.email))
+  if (body.email && !validateEmail(body.email))
     errors.push('email must be a valid email address.');
 
-  if (body.phone    && !validatePhone(body.phone))
+  if (body.phone && !validatePhone(body.phone))
     errors.push('phone must be a 10-digit number.');
 
   if (body.password && !validatePassword(body.password))
     errors.push('password must be at least 8 characters and include letters, numbers, and one special character.');
 
-  if (body.gender   && !VALID_GENDERS.includes(body.gender))
+  if (body.gender && !VALID_GENDERS.includes(body.gender))
     errors.push(`gender must be one of: ${VALID_GENDERS.join(', ')}.`);
 
-  if (body.role     && !VALID_ROLES.includes(body.role))
+  if (body.role && !VALID_ROLES.includes(body.role))
     errors.push(`role must be one of: ${VALID_ROLES.join(', ')}.`);
 
   return errors;

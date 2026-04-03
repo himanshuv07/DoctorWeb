@@ -33,17 +33,17 @@ class User extends Model<UserAttributes> implements UserAttributes {
 
 User.init(
   {
-    id:       { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    fname:    { type: DataTypes.STRING,  allowNull: false },
-    lname:    { type: DataTypes.STRING,  allowNull: false },
-    phone:    { type: DataTypes.STRING,  allowNull: false },
-    email:    { type: DataTypes.STRING,  allowNull: false, unique: true },
-    password: { type: DataTypes.STRING,  allowNull: false },
-    gender:   { type: DataTypes.ENUM('male', 'female'), allowNull: false },
-    role:     { type: DataTypes.ENUM('doctor', 'staff', 'admin'), allowNull: false },
-    address:  { type: DataTypes.STRING,  allowNull: true },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    fname: { type: DataTypes.STRING, allowNull: false },
+    lname: { type: DataTypes.STRING, allowNull: false },
+    phone: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false },
+    gender: { type: DataTypes.ENUM('male', 'female'), allowNull: false },
+    role: { type: DataTypes.ENUM('doctor', 'staff', 'admin'), allowNull: false },
+    address: { type: DataTypes.STRING, allowNull: true },
     isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
-    deletedAt:{ type: DataTypes.DATE,    allowNull: true },
+    deletedAt: { type: DataTypes.DATE, allowNull: true },
   },
   {
     sequelize,
