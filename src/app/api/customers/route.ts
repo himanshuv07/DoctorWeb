@@ -1,3 +1,5 @@
+// This file defines API routes for managing customers. It includes a GET route to retrieve all customers from the database and a POST route to create a new customer. The routes use Sequelize to interact with the database and return JSON responses with the appropriate status codes.
+
 import { NextRequest, NextResponse } from 'next/server';
 import { Customer, sequelize } from '../../../models';
 

@@ -1,4 +1,5 @@
-// this is a simple route to sync the database tables. You can call this once after setting up the project to create the tables in the database.
+// This is a simple route to sync the database tables. You can call this once after setting up the project to create the tables in the database.
+
 import { NextResponse } from 'next/server';
 import { sequelize } from '../../../models';
 

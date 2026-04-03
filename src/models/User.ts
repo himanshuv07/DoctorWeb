@@ -1,28 +1,4 @@
-// import { DataTypes, Model } from 'sequelize';
-// import sequelize from '../lib/database';
-
-// interface UserAttributes {
-//   id?: number;
-//   email: string;
-//   password: string;
-// }
-
-// class User extends Model<UserAttributes> implements UserAttributes {
-//   declare id: number;       // ← declare instead of public
-//   declare email: string;
-//   declare password: string;
-// }
-
-// User.init(
-//   {
-//     id:       { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-//     email:    { type: DataTypes.STRING,  allowNull: false, unique: true },
-//     password: { type: DataTypes.STRING,  allowNull: false },
-//   },
-//   { sequelize, tableName: 'users', timestamps: true }
-// );
-
-// export default User;
+// This file defines the User model using Sequelize, which represents the users in the database. It includes fields like id, fname, lname, phone, email, password, gender, role, address, isActive, and deletedAt. The model also includes validation rules and configurations for soft deletes and timestamps.
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../lib/database';
