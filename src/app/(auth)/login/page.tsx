@@ -157,7 +157,7 @@ export default function LoginPage() {
                     required
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-11 py-[11px] text-[13.5px] text-white placeholder-white/20 outline-none focus:border-violet-500/60 focus:bg-violet-500/[0.06] transition-all duration-200"
                   />
-                  <button
+                  <button 
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
@@ -185,6 +185,8 @@ export default function LoginPage() {
                   <p className="text-[12.5px] text-red-400">{error}</p>
                 </div>
               )}
+
+              <div className="user"> username : himanshu@gmail.com <span>password : himanshu@123</span></div>
 
               {/* Remember + Forgot */}
               <div className="flex items-center justify-between pt-0.5">
