@@ -2,10 +2,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, run the development server
 
 ```bash
 npm run dev
+
+
+Next.js starts
+    → finds instrumentation.ts
+    → calls register()
+        → calls initDatabase()
+            → DB connection check ✓
+            → tables synced ✓
+            → admin exists? No → create it ✓ / Yes → skip ✓
+    → server ready, accepts requests
+
+
 # or
 yarn dev
 # or

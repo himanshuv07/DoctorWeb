@@ -1,45 +1,42 @@
-// This file defines an API route for seeding the database with initial user data. It includes validation for the incoming request body, checks for duplicate users, hashes the password using bcrypt, and creates a new user in the database. The response includes either a success message with the created user (excluding sensitive fields) or an error message if something goes wrong.
+// This file defines the POST /api/seed route for manually creating users.
+// Admin auto-seeding on startup is handled in lib/database.ts — not here.
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import User from '../../../models/User';
-import sequelize from '../../../lib/database';
 
-// ── Validators ──────────────────────────────────────────────
-const VALID_GENDERS = ['male', 'female'] as const;
-const VALID_ROLES = ['doctor', 'staff', 'admin'] as const;
+// ── Constants ────────────────────────────────────────────────
+const VALID_GENDERS = ['male', 'female', 'other'] as const;
+const VALID_ROLES   = ['doctor', 'staff', 'admin'] as const;
 
+// ── Validators ───────────────────────────────────────────────
 function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function validatePhone(phone: string) {
-  // 10-digit number (adjust regex to your country format)
   return /^\d{10}$/.test(phone);
 }
 
 function validatePassword(password: string) {
-  // Min 8 chars, at least 1 letter, 1 number, 1 special char
   return /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/.test(password);
 }
 
 function validateBody(body: any): string[] {
   const errors: string[] = [];
 
-  // Required fields
-  if (!body.fname?.trim()) errors.push('fname is required.');
-  if (!body.lname?.trim()) errors.push('lname is required.');
-  if (!body.email?.trim()) errors.push('email is required.');
+  if (!body.fname?.trim())    errors.push('fname is required.');
+  if (!body.lname?.trim())    errors.push('lname is required.');
+  if (!body.email?.trim())    errors.push('email is required.');
   if (!body.password?.trim()) errors.push('password is required.');
-  if (!body.phone?.trim()) errors.push('phone is required.');
-  if (!body.gender) errors.push('gender is required.');
-  if (!body.role) errors.push('role is required.');
+  if (!body.phone?.trim())    errors.push('phone is required.');
+  if (!body.gender)           errors.push('gender is required.');
+  if (!body.role)             errors.push('role is required.');
 
-  // Format checks
-  if (body.email && !validateEmail(body.email))
+  if (body.email    && !validateEmail(body.email))
     errors.push('email must be a valid email address.');
 
-  if (body.phone && !validatePhone(body.phone))
+  if (body.phone    && !validatePhone(body.phone))
     errors.push('phone must be a 10-digit number.');
 
   if (body.password && !validatePassword(body.password))
@@ -54,7 +51,7 @@ function validateBody(body: any): string[] {
   return errors;
 }
 
-// ── Route Handler ────────────────────────────────────────────
+// ── POST — manually create any user ─────────────────────────
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -67,12 +64,13 @@ export async function POST(req: NextRequest) {
 
     const { email, password, fname, lname, phone, gender, role, address, isActive } = body;
 
-    await sequelize.sync({ alter: true });
-
     // 2. Duplicate check
     const existing = await User.findOne({ where: { email } });
     if (existing) {
-      return NextResponse.json({ error: 'User with this email already exists.' }, { status: 409 });
+      return NextResponse.json(
+        { error: 'User with this email already exists.' },
+        { status: 409 }
+      );
     }
 
     // 3. Hash & create
@@ -83,16 +81,16 @@ export async function POST(req: NextRequest) {
       lname,
       phone,
       email,
-      password: hashedPassword,
+      password : hashedPassword,
       gender,
       role,
       address,
-      isActive: isActive ?? true,
+      isActive : isActive ?? true,
     });
 
     const createdUser = await User.findOne({
-      where: { email },
-      attributes: { exclude: ['password', 'deletedAt'] },
+      where      : { email },
+      attributes : { exclude: ['password', 'deletedAt'] },
     });
 
     return NextResponse.json(
