@@ -157,7 +157,7 @@ export default function LoginPage() {
                     required
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-11 py-[11px] text-[13.5px] text-white placeholder-white/20 outline-none focus:border-violet-500/60 focus:bg-violet-500/[0.06] transition-all duration-200"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
@@ -186,7 +186,8 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <div className="user"> username : himanshu@gmail.com <span>password : himanshu@123</span></div>
+              <div className="user" style={{ color: 'white' }}> himanshuoffice@gmail.com</div>
+              <div className="pass" style={{ color: 'white' }}> himanshu@123</div>
 
               {/* Remember + Forgot */}
               <div className="flex items-center justify-between pt-0.5">
@@ -195,11 +196,10 @@ export default function LoginPage() {
                   onClick={() => setRemember(!remember)}
                 >
                   <div
-                    className={`w-4 h-4 rounded flex items-center justify-center border transition-all duration-150 flex-shrink-0 ${
-                      remember
+                    className={`w-4 h-4 rounded flex items-center justify-center border transition-all duration-150 flex-shrink-0 ${remember
                         ? 'bg-violet-600 border-violet-600'
                         : 'bg-transparent border-white/20 group-hover:border-white/40'
-                    }`}
+                      }`}
                   >
                     {remember && (
                       <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
