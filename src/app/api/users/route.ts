@@ -119,9 +119,12 @@ export async function GET(req: NextRequest) {
 // ── POST /api/users ─────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-
+     const body = await req.json();
+    console.log("POST BODY:", JSON.stringify(body, null, 2)); // 👈 add this
+    
     const errors = validateBody(body);
+    console.log("VALIDATION ERRORS:", errors); // 👈 add this
+    
     if (errors.length > 0) {
       return NextResponse.json({ errors }, { status: 422 });
     }
