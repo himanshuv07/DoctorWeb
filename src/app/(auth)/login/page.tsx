@@ -186,8 +186,8 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <div className="user" style={{ color: 'white' }}> himanshuoffice@gmail.com</div>
-              <div className="pass" style={{ color: 'white' }}> himanshu@123</div>
+              <div className="user" style={{ color: 'white' }}> admin@gmail.com</div>
+              <div className="pass" style={{ color: 'white' }}> admin@123</div>
 
               {/* Remember + Forgot */}
               <div className="flex items-center justify-between pt-0.5">
