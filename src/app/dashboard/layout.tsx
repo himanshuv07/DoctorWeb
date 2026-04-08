@@ -21,6 +21,7 @@ const navItems = [
   { label: 'Appointments', href: '/dashboard/appointments', icon: CalendarClock },
   { label: 'Doctors',      href: '/dashboard/doctors',      icon: Stethoscope },
   { label: 'Users',        href: '/dashboard/users',        icon: UserCog },
+  { label: 'Duration',     href: '/dashboard/duration',     icon: CalendarClock },
   { label: 'Settings',     href: '/dashboard/settings',     icon: Settings },
 ];
 
