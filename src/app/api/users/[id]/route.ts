@@ -1,4 +1,4 @@
-// This file defines the API routes for handling user-related operations such as fetching, updating, and deleting users.
+// This file defines API routes for managing users. It includes GET, PUT, and DELETE routes for retrieving, updating, and soft-deleting a user by their ID. The routes use Sequelize to interact with the database and bcrypt for password hashing. The responses are returned in JSON format with appropriate status codes based on the outcome of each operation.
 
 // APIs defined here:
 // GET /api/users/:id  → get user by id (excluding password)

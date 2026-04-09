@@ -30,18 +30,18 @@ import { cn } from '@/lib/utils';
 
 // ─── Nav Items ───────────────────────────────────────────────────────────────
 const navItems = [
-  { label: 'Dashboard',    href: '/dashboard',              icon: LayoutDashboard },
-  { label: 'Patients',     href: '/dashboard/patients',     icon: Users },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Patients', href: '/dashboard/patients', icon: Users },
   { label: 'Appointments', href: '/dashboard/appointments', icon: CalendarClock },
-  { label: 'Doctors',      href: '/dashboard/doctors',      icon: Stethoscope },
-  { label: 'Users',        href: '/dashboard/users',        icon: UserCog },
-  { label: 'Settings',     href: '/dashboard/settings',     icon: Settings },
+  { label: 'Doctors', href: '/dashboard/doctors', icon: Stethoscope },
+  { label: 'Users', href: '/dashboard/users', icon: UserCog },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname  = usePathname();
-  const router    = useRouter();
+  const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {

@@ -1,8 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import type { User } from "./GetAllUserData"
-import API from "@/lib/axios"
+import type { User } from "./Getalluserdata"
+import API from "@/lib/Axios"
 
 interface AddUserModalProps {
   user: User | null
