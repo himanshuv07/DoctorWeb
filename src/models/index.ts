@@ -1,7 +1,22 @@
-// This file is used to export all the models and the sequelize instance for easy import in other parts of the application.
+import sequelize from "../lib/database";
+import Customer from "./Customer";
+import User, { associateUser } from "./User";
+import Duration from "./duration"; // ✅ import only
+import Service, { associateService } from "./services";
 
-import sequelize from '../lib/database';
-import Customer from './Customer';
-import User from './User';
+// ✅ Register models
+const models: any = {
+  sequelize,
+  Customer,
+  User,
+  Service,
+  Duration, // ✅ add this
+};
 
-export { sequelize, Customer, User };
+// ✅ CALL ASSOCIATIONS
+associateUser(models);
+associateService(models);
+Duration.associate(models); // ✅ FIXED
+
+export { sequelize, Customer, User, Service, Duration };
+export default models;

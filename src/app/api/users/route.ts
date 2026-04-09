@@ -4,10 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import User from '../../../models/User';
 import sequelize from '../../../lib/database';
+import models from '@/models';
 
 // ── Constants ────────────────────────────────────────────────
 const VALID_GENDERS = ['male', 'female', 'other'] as const;
-const VALID_ROLES   = ['doctor', 'staff', 'admin'] as const;
+const VALID_ROLES = ['doctor', 'staff', 'admin'] as const;
 
 // ── Validators ───────────────────────────────────────────────
 function validateEmail(email: string) {
@@ -25,13 +26,13 @@ function validatePassword(password: string) {
 function validateBody(body: any): string[] {
   const errors: string[] = [];
 
-  if (!body.fname?.trim())    errors.push('fname is required.');
-  if (!body.lname?.trim())    errors.push('lname is required.');
-  if (!body.email?.trim())    errors.push('email is required.');
+  if (!body.fname?.trim()) errors.push('fname is required.');
+  if (!body.lname?.trim()) errors.push('lname is required.');
+  if (!body.email?.trim()) errors.push('email is required.');
   if (!body.password?.trim()) errors.push('password is required.');
-  if (!body.phone?.trim())    errors.push('phone is required.');
-  if (!body.gender)           errors.push('gender is required.');
-  if (!body.role)             errors.push('role is required.');
+  if (!body.phone?.trim()) errors.push('phone is required.');
+  if (!body.gender) errors.push('gender is required.');
+  if (!body.role) errors.push('role is required.');
 
   if (body.email && !validateEmail(body.email))
     errors.push('email must be a valid email address.');
@@ -81,19 +82,36 @@ export async function GET(req: NextRequest) {
     }
 
     // ?role=doctor → filter
+    // const queryOptions: any = {
+    //   attributes: { exclude: ['password', 'deletedAt'] },
+    //   order: [['createdAt', 'DESC']],
+    // };
+
     const queryOptions: any = {
       attributes: { exclude: ['password', 'deletedAt'] },
       order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: models.Service,
+          as: "Services",
+          attributes: ["id", "name"],
+          through: { attributes: [] },
+        },
+      ],
     };
 
-    if (role && VALID_ROLES.includes(role as any)) {
+    if (role) {
       queryOptions.where = { role };
     }
 
-    const users = await User.findAll(queryOptions);
-    return NextResponse.json({ total: users.length, users }, { status: 200 });
+    const users = await models.User.findAll(queryOptions);
+
+    console.log(JSON.stringify(users, null, 2)); // debug
+
+    return NextResponse.json({ users }, { status: 200 });
 
   } catch (error: any) {
+    console.error("API ERROR:", error); // 👈 CHECK THIS IN TERMINAL
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -101,17 +119,18 @@ export async function GET(req: NextRequest) {
 // ── POST /api/users ─────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-
-    // 1. Validate
+     const body = await req.json();
+    console.log("POST BODY:", JSON.stringify(body, null, 2)); // 👈 add this
+    
     const errors = validateBody(body);
+    console.log("VALIDATION ERRORS:", errors); // 👈 add this
+    
     if (errors.length > 0) {
       return NextResponse.json({ errors }, { status: 422 });
     }
 
-    const { email, password, fname, lname, phone, gender, role, address, isActive } = body;
+    const { email, password, fname, lname, phone, gender, role, address, isActive, speciality } = body;
 
-    // 2. Duplicate check
     const existing = await User.findOne({ where: { email } });
     if (existing) {
       return NextResponse.json(
@@ -120,24 +139,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Hash & create
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await User.create({
-      fname,
-      lname,
-      phone,
-      email,
+    const newUser = await models.User.create({
+      fname, lname, phone, email,
       password: hashedPassword,
-      gender,
-      role,
+      gender, role,
       address,
       isActive: isActive ?? true,
     });
 
-    const createdUser = await User.findOne({
-      where: { email },
+    // ✅ Link specialities for doctors
+    if (role === 'doctor' && Array.isArray(speciality) && speciality.length > 0) {
+      const services = await models.Service.findAll({
+        where: { name: speciality }
+      });
+      if (services.length > 0) {
+        await (newUser as any).addServices(services);
+      }
+    }
+
+    const createdUser = await models.User.findByPk(newUser.id, {
       attributes: { exclude: ['password', 'deletedAt'] },
+      include: [{
+        model: models.Service,
+        as: 'Services',
+        attributes: ['id', 'name'],
+        through: { attributes: [] },
+      }],
     });
 
     return NextResponse.json(

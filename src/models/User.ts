@@ -1,7 +1,5 @@
-// This file defines the User model using Sequelize, which represents the users in the database. It includes fields like id, fname, lname, phone, email, password, gender, role, address, isActive, and deletedAt. The model also includes validation rules and configurations for soft deletes and timestamps.
-
-import { DataTypes, Model, Optional } from 'sequelize';
-import sequelize from '../lib/database';
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../lib/database";
 
 interface UserAttributes {
   id?: number;
@@ -10,8 +8,8 @@ interface UserAttributes {
   phone: string;
   email: string;
   password: string;
-  gender: 'male' | 'female';
-  role: 'doctor' | 'staff' | 'admin';
+  gender: "male" | "female";
+  role: "doctor" | "staff" | "admin";
   address?: string;
   isActive?: boolean;
   deletedAt?: Date | null;
@@ -24,13 +22,17 @@ class User extends Model<UserAttributes> implements UserAttributes {
   declare phone: string;
   declare email: string;
   declare password: string;
-  declare gender: 'male' | 'female';
-  declare role: 'doctor' | 'staff' | 'admin';
+  declare gender: "male" | "female";
+  declare role: "doctor" | "staff" | "admin";
   declare address: string;
   declare isActive: boolean;
   declare deletedAt: Date | null;
+
+  // 👇 Optional (for TS autocomplete)
+  declare Services?: any[];
 }
 
+// ✅ INIT (ONLY schema here)
 User.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -39,18 +41,34 @@ User.init(
     phone: { type: DataTypes.STRING, allowNull: false },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
-    gender: { type: DataTypes.ENUM('male', 'female'), allowNull: false },
-    role: { type: DataTypes.ENUM('doctor', 'staff', 'admin'), allowNull: false },
+    gender: { type: DataTypes.ENUM("male", "female"), allowNull: false },
+    role: { type: DataTypes.ENUM("doctor", "staff", "admin"), allowNull: false },
     address: { type: DataTypes.STRING, allowNull: true },
     isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
     deletedAt: { type: DataTypes.DATE, allowNull: true },
   },
   {
     sequelize,
-    tableName: 'users',
+    tableName: "users",
     timestamps: true,
-    paranoid: true, // Enable soft deletes
+    paranoid: true,
   }
 );
+
+// ✅ ASSOCIATIONS (OUTSIDE init)
+export const associateUser = (models: any) => {
+  User.belongsToMany(models.Service, {
+    through: "User_Services",
+    foreignKey: "userId",
+    otherKey: "serviceId",
+    as: "Services",
+  });
+  
+  // User.hasOne(models.DoctorDetails, {
+  //   foreignKey: "userId",
+  //   as: "DoctorDetail1",
+  //   onDelete: "CASCADE",
+  // });
+};
 
 export default User;

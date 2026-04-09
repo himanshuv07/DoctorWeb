@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react"
 import API from "@/lib/axios"
-import DataTable from "./DataTable.tsx"
+import DataTable from "./DataTable"
 
 export interface User {
   id: string | number
@@ -18,15 +18,21 @@ export interface User {
 
 export default function GetAllUserData() {
   const [tableData, setTableData] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<string | null>(null)
 
   const getAllUserData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       const response = await API.get("/users")
-      setTableData(Array.isArray(response.data.users) ? response.data.users : [])
+      // support both { users: [...] } and [...] response shapes
+      const list = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.users)
+          ? response.data.users
+          : []
+      setTableData(list)
     } catch (err) {
       setError("Failed to fetch users. Please try again.")
       console.error(err)
@@ -35,9 +41,7 @@ export default function GetAllUserData() {
     }
   }, [])
 
-  useEffect(() => {
-    getAllUserData()
-  }, [getAllUserData])
+  useEffect(() => { getAllUserData() }, [getAllUserData])
 
   if (loading) {
     return (
@@ -64,10 +68,8 @@ export default function GetAllUserData() {
             <p className="text-slate-200 font-semibold">{error}</p>
             <p className="text-slate-500 text-sm mt-1">Check your connection and try again</p>
           </div>
-          <button
-            onClick={getAllUserData}
-            className="px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
-          >
+          <button onClick={getAllUserData}
+            className="px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
             Retry
           </button>
         </div>
@@ -76,7 +78,7 @@ export default function GetAllUserData() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-5">
       {/* Page Header */}
       <div>
         <h1 className="text-xl font-bold text-white tracking-tight">User Table</h1>
@@ -89,14 +91,16 @@ export default function GetAllUserData() {
         </nav>
       </div>
 
-      {/* Data Table Card */}
-      <div className="bg-[#1a1d2e] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-        <div className="px-6 py-4 border-b border-white/5">
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-            User Datatable
-          </h2>
+      {/* Card */}
+      <div className="bg-[#1a1d2e] border border-white/[0.06] rounded-2xl overflow-hidden shadow-xl">
+        <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2">
+          <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <h2 className="text-xs font-bold text-slate-300 uppercase tracking-widest">User Datatable</h2>
         </div>
-        <div className="p-4">
+        <div className="p-5">
           <DataTable data={tableData} refresh={getAllUserData} />
         </div>
       </div>

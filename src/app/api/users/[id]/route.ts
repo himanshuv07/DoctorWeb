@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import User from '../../../../models/User';
 import sequelize from '../../../../lib/database';
+import models from '@/models';
 
 const VALID_GENDERS = ['male', 'female'];
 const VALID_ROLES = ['doctor', 'staff', 'admin'];
@@ -62,7 +63,8 @@ export async function PUT(req: NextRequest, context: any) {
 
     await sequelize.sync();
 
-    const user = await User.findByPk(id);
+    // ✅ Use models.User (not bare User) so associations work
+    const user = await models.User.findByPk(id);
     if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
 
     if (body.password) {
@@ -71,8 +73,26 @@ export async function PUT(req: NextRequest, context: any) {
 
     await user.update(body);
 
-    const updatedUser = await User.findByPk(id, {
+    // ✅ Update specialities for doctors
+    if (body.role === 'doctor' || user.role === 'doctor') {
+      const speciality = Array.isArray(body.speciality) ? body.speciality : [];
+      const services = speciality.length > 0
+        ? await models.Service.findAll({ where: { name: speciality } })
+        : [];
+      await (user as any).setServices(services); // clears old + sets new
+    } else {
+      // If role changed away from doctor, clear all services
+      await (user as any).setServices([]);
+    }
+
+    const updatedUser = await models.User.findByPk(id, {
       attributes: { exclude: ['password', 'deletedAt'] },
+      include: [{
+        model: models.Service,
+        as: 'Services',
+        attributes: ['id', 'name'],
+        through: { attributes: [] },
+      }],
     });
 
     return NextResponse.json(
