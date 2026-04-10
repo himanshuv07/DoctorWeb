@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import sequelize from "@/lib/database";
 import models from "@/models";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -30,15 +29,29 @@ function validateDuration(value: any): string[] {
 // ── GET /api/duration ────────────────────────────────────────
 export async function GET() {
   try {
-    await sequelize.sync();
-
     const durations = await models.Duration.findAll({
+      attributes: ["id", "value"],
       order: [["value", "ASC"]],
     });
 
-    return NextResponse.json({ durations }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Durations fetched successfully",
+        data: durations,
+        durations,
+      },
+      { status: 200 }
+    );
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch durations",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 

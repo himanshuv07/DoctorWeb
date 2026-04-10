@@ -1,22 +1,25 @@
 import sequelize from "../lib/database";
-import Customer from "./Customer";
+import Customer from "./patients";
 import User, { associateUser } from "./User";
-import Duration from "./duration"; // ✅ import only
+import UserService from "./UserServices";
+import Duration from "./duration";
 import Service, { associateService } from "./services";
+import Patient from "./patients";
 
-// ✅ Register models
 const models: any = {
   sequelize,
   Customer,
   User,
+  UserService,
   Service,
-  Duration, // ✅ add this
+  Duration,
+  Patient,
 };
 
-// ✅ CALL ASSOCIATIONS
 associateUser(models);
 associateService(models);
-Duration.associate(models); // ✅ FIXED
+Duration.associate(models);
+Patient.associate(models);
 
-export { sequelize, Customer, User, Service, Duration };
+export { sequelize, Customer, User, UserService, Service, Duration, Patient };
 export default models;

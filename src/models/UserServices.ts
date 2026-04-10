@@ -37,6 +37,12 @@ UserService.init(
     sequelize,
     tableName: "User_Services",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["userId", "serviceId"],
+      },
+    ],
   }
 );
 
