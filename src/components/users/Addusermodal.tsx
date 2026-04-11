@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
 import type { User } from "./Getalluserdata"
 import API from "@/lib/axios"
+import React, { useState, useEffect, useCallback, useRef } from "react"
+
 
 // ── Constants ────────────────────────────────────────────────────────────────
 interface AddUserModalProps {
@@ -11,11 +12,10 @@ interface AddUserModalProps {
   onSuccess: () => void
 }
 
-const SPECIALITIES = [
-  "Physiologist", "Cardiologist", "General Physician",
-  "Gynaecologist", "Neurologist", "Dermatologist",
-  "Orthopaedic", "Paediatrician", "Radiologist",
-]
+interface ServiceOption {
+  id: number
+  name: string
+}
 
 interface FormState {
   firstName: string
@@ -52,24 +52,62 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
 
+  // ----------------------------------------------------------------------------------------
+
+  const [services, setServices] = useState<ServiceOption[]>([])
+  const [servicesLoading, setServicesLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      setServicesLoading(true)
+      try {
+        const res = await API.get("/services")
+        // your API returns { data: [...] }
+        setServices(res.data?.data ?? [])
+      } catch {
+        setServices([])
+      } finally {
+        setServicesLoading(false)
+      }
+    }
+    fetchServices()
+  }, []) // runs once on mount
+
+  const [specOpen, setSpecOpen] = useState(false)
+  const [specSearch, setSpecSearch] = useState("")
+  const specRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (specRef.current && !specRef.current.contains(e.target as Node)) {
+        setSpecOpen(false)
+        setSpecSearch("")
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // ------------------------------------------------------------------------------------------------
+
   // ── Populate form on edit ─────────────────────────────────────────────────
   useEffect(() => {
     if (user) {
       const raw = user as any
       setForm({
-        firstName:  raw.fname       ?? raw.firstName  ?? "",
-        lastName:   raw.lname       ?? raw.lastName   ?? "",
-        email:      raw.email       ?? "",
-        phone:      raw.phone       ?? "",
-        gender:     raw.gender      ?? "male",
-        role:       raw.role        ?? "staff",
-        password:   "",
+        firstName: raw.fname ?? raw.firstName ?? "",
+        lastName: raw.lname ?? raw.lastName ?? "",
+        email: raw.email ?? "",
+        phone: raw.phone ?? "",
+        gender: raw.gender ?? "male",
+        role: raw.role ?? "staff",
+        password: "",
         speciality: Array.isArray(raw.speciality)
           ? raw.speciality
           : Array.isArray(raw.Services)
             ? raw.Services.map((s: any) => s.name ?? "").filter(Boolean)
             : [],
-        isActive:   raw.isActive    ?? true,
+        isActive: raw.isActive ?? true,
       })
     } else {
       setForm(EMPTY)
@@ -127,13 +165,10 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
   }, [])
 
   const toggleSpec = useCallback((s: string) => {
-    setForm(f => ({
-      ...f,
-      speciality: f.speciality.includes(s)
-        ? f.speciality.filter(x => x !== s)
-        : [...f.speciality, s],
-    }))
+    setForm(f => ({ ...f, speciality: [s] }))  // always set to single item
     setErrs(p => ({ ...p, speciality: undefined }))
+    setSpecOpen(false)   // close dropdown after selection
+    setSpecSearch("")
   }, [])
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -195,14 +230,14 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
     setLoading(true)
     try {
       const payload: Record<string, unknown> = {
-        fname:      form.firstName.trim(),
-        lname:      form.lastName.trim(),
-        email:      form.email.trim().toLowerCase(),
-        phone:      form.phone.trim(),
-        gender:     form.gender,
-        role:       form.role,
+        fname: form.firstName.trim(),
+        lname: form.lastName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        gender: form.gender,
+        role: form.role,
         speciality: form.speciality,
-        isActive:   form.isActive,
+        isActive: form.isActive,
       }
       if (form.password.trim()) payload.password = form.password
 
@@ -408,29 +443,149 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
 
             {/* Specialities — doctor only */}
             {form.role === "doctor" && (
-              <div className="space-y-2">
+              <div className="space-y-2" ref={specRef}>
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   Specialities
                   <span className="text-violet-400 ml-0.5">*</span>
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {SPECIALITIES.map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => toggleSpec(s)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                        form.speciality.includes(s)
-                          ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
-                          : "bg-white/[0.04] border-white/10 text-slate-400 hover:border-white/25 hover:text-slate-200"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
+
+                {/* Trigger button */}
+                <button
+                  type="button"
+                  onClick={() => { setSpecOpen(v => !v); setSpecSearch("") }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl
+                  bg-[#0d0f1e] border text-sm transition-all
+                  ${specOpen
+                      ? "border-violet-500/50 ring-2 ring-violet-500/40"
+                      : "border-white/10 hover:border-white/20"
+                    }`}
+                >
+                  <span className={form.speciality.length > 0 ? "text-slate-200" : "text-slate-600"}>
+                    {form.speciality.length > 0
+                      ? form.speciality[0]        // show the name directly instead of "1 selected"
+                      : "Select speciality..."} 
+                  </span>
+                  <svg
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${specOpen ? "rotate-180" : ""}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Selected tags */}
+                {form.speciality.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {form.speciality.map(s => (
+                      <span
+                        key={s}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium
+                       bg-emerald-500/20 border border-emerald-500/40 text-emerald-400"
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => toggleSpec(s)}
+                          className="hover:text-white transition-colors ml-0.5"
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Dropdown */}
+                {specOpen && (
+                  <div className="rounded-xl border border-white/10 bg-[#0d0f1e] shadow-2xl shadow-black/60 overflow-hidden">
+
+                    {/* Search */}
+                    <div className="p-2 border-b border-white/[0.06]">
+                      <div className="relative">
+                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500"
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+                        </svg>
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="Search specialities..."
+                          value={specSearch}
+                          onChange={e => setSpecSearch(e.target.value)}
+                          className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/[0.04] border border-white/10
+                         text-sm text-slate-200 placeholder:text-slate-600 outline-none
+                         focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Options list */}
+                    <div className="max-h-48 overflow-y-auto py-1">
+                      {servicesLoading ? (
+                        <div className="flex items-center gap-2 px-4 py-3">
+                          <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-violet-400 rounded-full animate-spin" />
+                          <span className="text-xs text-slate-500">Loading...</span>
+                        </div>
+                      ) : services.filter(s =>
+                        s.name.toLowerCase().includes(specSearch.toLowerCase())
+                      ).length === 0 ? (
+                        <p className="text-xs text-slate-500 px-4 py-3">No specialities found.</p>
+                      ) : (
+                        services
+                          .filter(s => s.name.toLowerCase().includes(specSearch.toLowerCase()))
+                          .map(s => {
+                            const selected = form.speciality.includes(s.name)
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => toggleSpec(s.name)}
+                                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm
+                                transition-colors text-left
+                                ${selected
+                                    ? "bg-emerald-500/10 text-emerald-400"
+                                    : "text-slate-300 hover:bg-white/[0.04] hover:text-white"
+                                  }`}
+                              >
+                                <span>{s.name}</span>
+                                {selected && (
+                                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </button>
+                            )
+                          })
+                      )}
+                    </div>
+
+                    {/* Footer — clear all */}
+                    {form.speciality.length > 0 && (
+                      <div className="border-t border-white/[0.06] p-2">
+                        <button
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, speciality: [] }))}
+                          className="w-full py-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors rounded-lg
+                         hover:bg-red-500/10 text-center"
+                        >
+                          Clear all selections
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {errs.speciality && (
-                  <p className="text-[11px] text-red-400 mt-1">{errs.speciality}</p>
+                  <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1">
+                    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                    {errs.speciality}
+                  </p>
                 )}
               </div>
             )}
@@ -450,9 +605,8 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                 onClick={toggleActive}
                 role="switch"
                 aria-checked={form.isActive}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${
-                  form.isActive ? "bg-violet-600" : "bg-white/10"
-                }`}
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${form.isActive ? "bg-violet-600" : "bg-white/10"
+                  }`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm
                                   transition-transform duration-200 ${form.isActive ? "translate-x-5" : ""}`}
@@ -510,9 +664,8 @@ function PasswordStrength({ password }: { password: string }) {
         {[0, 1, 2, 3].map(i => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-              i < score ? color : "bg-white/10"
-            }`}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < score ? color : "bg-white/10"
+              }`}
           />
         ))}
       </div>
@@ -526,9 +679,9 @@ const inputCls = (hasErr: boolean) =>
   `w-full px-3.5 py-2.5 rounded-xl bg-[#0d0f1e] border text-sm text-slate-200
    placeholder:text-slate-600 outline-none transition-all focus:ring-2 focus:ring-offset-0
    ${hasErr
-     ? "border-red-500/60 focus:ring-red-500/25"
-     : "border-white/10 hover:border-white/20 focus:ring-violet-500/40 focus:border-violet-500/50"
-   }`
+    ? "border-red-500/60 focus:ring-red-500/25"
+    : "border-white/10 hover:border-white/20 focus:ring-violet-500/40 focus:border-violet-500/50"
+  }`
 
 const selectCls =
   `w-full px-3.5 py-2.5 rounded-xl bg-[#0d0f1e] border border-white/10 text-sm text-slate-200

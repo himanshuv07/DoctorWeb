@@ -377,7 +377,9 @@ export default function PatientsPage() {
                                             <td className="px-4 py-4 text-[#d7ddff]">{patient.fname}</td>
                                             <td className="px-4 py-4 text-[#d7ddff]">{patient.lname}</td>
                                             <td className="px-4 py-4 text-[#d7ddff]">{patient.phone}</td>
-                                            <td className="px-4 py-4 text-[#9ba5c7]">{patient.email}</td>
+                                            <td className="px-4 py-4 text-[#9ba5c7] max-w-[180px] truncate">
+                                                {patient.email}
+                                            </td>
                                             <td className="px-4 py-4 text-[#9ba5c7] capitalize">
                                                 {patient.gender}
                                             </td>
