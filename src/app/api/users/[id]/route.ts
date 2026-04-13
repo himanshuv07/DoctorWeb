@@ -59,7 +59,27 @@ export async function PUT(req: NextRequest, context: any) {
     const body = await req.json();
 
     const errors = validateUpdateBody(body);
-    if (errors.length > 0) return NextResponse.json({ errors }, { status: 422 });
+
+    // ✅ LENGTH VALIDATION
+    if (body.fname && body.fname.length > 50) {
+      errors.push("First name must be at most 50 characters");
+    }
+
+    if (body.lname && body.lname.length > 50) {
+      errors.push("Last name must be at most 50 characters");
+    }
+
+    if (body.email && body.email.length > 50) {
+      errors.push("Email must be at most 50 characters");
+    }
+
+    // ✅ RETURN ALL ERRORS TOGETHER
+    if (errors.length > 0) {
+      return NextResponse.json(
+        { errors },
+        { status: 422 }
+      );
+    }
 
     await sequelize.sync();
 

@@ -1,75 +1,114 @@
-// GET /api/services
-// POST /api/services
-
 import { NextRequest, NextResponse } from "next/server";
-import sequelize from "@/lib/database";
-import models from "@/models";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { Service, Duration } from "@/models";
 
-// ── Validators ─────────────────────────────
-function validateService(body: any): string[] {
-  const errors: string[] = [];
-
-  if (!body.name?.trim()) errors.push("Service name is required");
-
-  return errors;
-}
-
-// ── GET all services ───────────────────────
 export async function GET() {
-  try {
-    await sequelize.sync();
+    try {
+        const services = await Service.findAll({
+            include: [
+                {
+                    model: Duration,
+                    as: "duration",
+                    attributes: ["id", "value"],
+                },
+            ],
+            order: [["id", "DESC"]],
+        });
 
-    const services = await models.Service.findAll({
-      order: [["createdAt", "DESC"]],
-      include: [
-        {
-          model: models.Duration,
-          attributes: ["id", "value"],
-        },
-      ],
-    });
-
-    return NextResponse.json({ services }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Services fetched successfully",
+                data: services,
+            },
+            { status: 200 }
+        );
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to fetch services",
+                error: error.message,
+            },
+            { status: 500 }
+        );
+    }
 }
 
-// ── CREATE service ─────────────────────────
 export async function POST(req: NextRequest) {
-  try {
-    // ✅ Auth
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
+    try {
+        const body = await req.json();
+        const { name, price, durationId, createdBy, updatedBy } = body;
 
-    if (!token) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        if (!name || durationId === undefined || price === undefined || !createdBy) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "name, price, durationId and createdBy are required",
+                },
+                { status: 400 }
+            );
+        }
+
+        const duration = await Duration.findByPk(durationId);
+
+        if (!duration) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Selected duration does not exist",
+                },
+                { status: 404 }
+            );
+        }
+
+        const existingService = await Service.findOne({
+            where: { name },
+        });
+
+        if (existingService) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Service name already exists",
+                },
+                { status: 409 }
+            );
+        }
+
+        const service = await Service.create({
+            name,
+            price,
+            durationId,
+            createdBy,
+            updatedBy: updatedBy ?? null,
+        });
+
+        const newService = await Service.findByPk(service.id, {
+            include: [
+                {
+                    model: Duration,
+                    as: "duration",
+                    attributes: ["id", "value"],
+                },
+            ],
+        });
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Service created successfully",
+                data: newService,
+            },
+            { status: 201 }
+        );
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to create service",
+                error: error.message,
+            },
+            { status: 500 }
+        );
     }
-
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    const userId = decoded.id;
-
-    const body = await req.json();
-
-    const errors = validateService(body);
-    if (errors.length > 0) {
-      return NextResponse.json({ errors }, { status: 422 });
-    }
-
-    const service = await models.Service.create({
-      name: body.name,
-      durationId: body.durationId, // FK
-      createdBy: userId,
-      updatedBy: null,
-    });
-
-    return NextResponse.json(
-      { message: "Service created successfully", service },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 }

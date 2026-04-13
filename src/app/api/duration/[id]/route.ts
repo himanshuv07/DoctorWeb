@@ -84,45 +84,90 @@ export async function PUT(req: NextRequest, context: any) {
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
         const userId = decoded.id;
 
+        const numericValue = Number(value);
+
+        // ✅ VALIDATION
+        if (isNaN(numericValue)) {
+            return NextResponse.json(
+                { errors: ["Invalid input"] },
+                { status: 422 }
+            );
+        }
+
+        if (numericValue < MINIMUM_DURATION) {
+            return NextResponse.json(
+                { errors: [`Minimum duration is ${MINIMUM_DURATION} min`] },
+                { status: 422 }
+            );
+        }
+
+        if (numericValue % 5 !== 0) {
+            return NextResponse.json(
+                { errors: ["Duration must be in multiple of 5"] },
+                { status: 422 }
+            );
+        }
+
+        // ✅ CHECK DUPLICATE (VERY IMPORTANT)
+        const duplicate = await models.Duration.findOne({
+            where: {
+                value: numericValue,
+                id: { [require("sequelize").Op.ne]: duration.id },
+            },
+        });
+
+        if (duplicate) {
+            return NextResponse.json(
+                { errors: ["This duration already exists."] },
+                { status: 409 }
+            );
+        }
+
+        // ✅ UPDATE ONLY AFTER VALIDATION
         await duration.update({
-            value,
-            updatedBy: userId, // ✅ FIXED
+            value: numericValue,
+            updatedBy: userId,
         });
 
         return NextResponse.json(
-            { message: "Updated successfully", duration },
+            {
+                success: true,
+                message: "Updated successfully",
+                data: duration,
+            },
             { status: 200 }
         );
+
     } catch (error: any) {
         return NextResponse.json(
-            { error: error.message },
+            { message: error.message || "Something went wrong" },
             { status: 500 }
         );
     }
 }
 
-// ── DELETE /api/duration/:id ─────────────────────────────────
-export async function DELETE(_req: NextRequest, context: any) {
-    try {
-        const { id } = await context.params;
-        await sequelize.sync();
+    // ── DELETE /api/duration/:id ─────────────────────────────────
+    export async function DELETE(_req: NextRequest, context: any) {
+        try {
+            const { id } = await context.params;
+            await sequelize.sync();
 
-        const duration = await models.Duration.findByPk(id);
+            const duration = await models.Duration.findByPk(id);
 
-        if (!duration) {
+            if (!duration) {
+                return NextResponse.json(
+                    { error: "Duration not found." },
+                    { status: 404 }
+                );
+            }
+
+            await duration.destroy();
+
             return NextResponse.json(
-                { error: "Duration not found." },
-                { status: 404 }
+                { message: "Duration deleted successfully." },
+                { status: 200 }
             );
+        } catch (error: any) {
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
-
-        await duration.destroy();
-
-        return NextResponse.json(
-            { message: "Duration deleted successfully." },
-            { status: 200 }
-        );
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-}

@@ -21,16 +21,16 @@ let toastId = 0;
 function ToastIcon({ type }: { type: ToastType }) {
   const cls = "w-5 h-5 flex-shrink-0";
   if (type === "success") return <CheckCircle className={cls} />;
-  if (type === "error")   return <AlertCircle className={cls} />;
+  if (type === "error") return <AlertCircle className={cls} />;
   if (type === "warning") return <AlertTriangle className={cls} />;
   return <Info className={cls} />;
 }
 
 const toastStyles: Record<ToastType, { border: string; icon: string; bg: string; title: string }> = {
-  success: { bg: "bg-[#0d2818]", border: "border-green-600",  icon: "text-green-400",  title: "text-green-300"  },
-  error:   { bg: "bg-[#2a0d0d]", border: "border-red-600",    icon: "text-red-400",    title: "text-red-300"    },
+  success: { bg: "bg-[#0d2818]", border: "border-green-600", icon: "text-green-400", title: "text-green-300" },
+  error: { bg: "bg-[#2a0d0d]", border: "border-red-600", icon: "text-red-400", title: "text-red-300" },
   warning: { bg: "bg-[#2a1e0d]", border: "border-yellow-500", icon: "text-yellow-400", title: "text-yellow-300" },
-  info:    { bg: "bg-[#0d1a2a]", border: "border-blue-500",   icon: "text-blue-400",   title: "text-blue-300"   },
+  info: { bg: "bg-[#0d1a2a]", border: "border-blue-500", icon: "text-blue-400", title: "text-blue-300" },
 };
 
 function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: number) => void }) {
@@ -111,6 +111,8 @@ export default function DurationPage() {
   const [showEntries, setShowEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [editErrors, setEditErrors] = useState<string[]>([]);
 
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -147,27 +149,81 @@ export default function DurationPage() {
   useEffect(() => { fetchDurations(); }, []);
 
   // ── Add ──
+  // const addDuration = async () => {
+  //   if (!value || isNaN(Number(value))) {
+  //     addToast("warning", "Invalid input", "Please enter a valid numeric duration value.");
+  //     return;
+  //   }
+  //   if (Number(value) <= 0) {
+  //     addToast("warning", "Invalid value", "Duration must be greater than 0 minutes.");
+  //     return;
+  //   }
+  //   try {
+  //     await axios.post("/duration", { value: Number(value) });
+  //     setValue("");
+  //     setIsAddOpen(false);
+  //     await fetchDurations();
+  //     addToast("success", "Duration added", `${value} minutes has been added successfully.`);
+  //   } catch (err: any) {
+  //     addToast("error", "Add failed", err?.response?.data?.message || "Something went wrong while adding the duration.");
+  //   }
+  // };
+
   const addDuration = async () => {
+    // optional basic frontend check
     if (!value || isNaN(Number(value))) {
-      addToast("warning", "Invalid input", "Please enter a valid numeric duration value.");
+      setFormErrors(["Please enter a valid numeric duration value."]);
       return;
     }
-    if (Number(value) <= 0) {
-      addToast("warning", "Invalid value", "Duration must be greater than 0 minutes.");
-      return;
-    }
+
     try {
       await axios.post("/duration", { value: Number(value) });
+
       setValue("");
+      setFormErrors([]); // ✅ clear errors
       setIsAddOpen(false);
+
       await fetchDurations();
+
       addToast("success", "Duration added", `${value} minutes has been added successfully.`);
     } catch (err: any) {
-      addToast("error", "Add failed", err?.response?.data?.message || "Something went wrong while adding the duration.");
+      const apiError = err?.response?.data;
+
+      if (apiError?.errors && Array.isArray(apiError.errors)) {
+        setFormErrors(apiError.errors); // ✅ inline errors
+      } else {
+        setFormErrors([]);
+        addToast(
+          "error",
+          "Add failed",
+          apiError?.message || "Something went wrong while adding the duration."
+        );
+      }
     }
   };
 
   // ── Delete ──
+  // const askDelete = (id: number) => {
+  //   setDeleteTargetId(id);
+  //   setConfirmOpen(true);
+  // };
+
+
+
+  // const confirmDelete = async () => {
+  //   if (!deleteTargetId) return;
+  //   setConfirmOpen(false);
+  //   try {
+  //     await axios.delete(`/duration/${deleteTargetId}`);
+  //     await fetchDurations();
+  //     addToast("success", "Deleted", "The duration has been removed successfully.");
+  //   } catch (err: any) {
+  //     addToast("error", "Delete failed", err?.response?.data?.message || "Could not delete. Please try again.");
+  //   } finally {
+  //     setDeleteTargetId(null);
+  //   }
+  // };
+
   const askDelete = (id: number) => {
     setDeleteTargetId(id);
     setConfirmOpen(true);
@@ -176,42 +232,103 @@ export default function DurationPage() {
   const confirmDelete = async () => {
     if (!deleteTargetId) return;
     setConfirmOpen(false);
+
     try {
       await axios.delete(`/duration/${deleteTargetId}`);
       await fetchDurations();
+
       addToast("success", "Deleted", "The duration has been removed successfully.");
     } catch (err: any) {
-      addToast("error", "Delete failed", err?.response?.data?.message || "Could not delete. Please try again.");
+      addToast(
+        "error",
+        "Delete failed",
+        err?.response?.data?.message || "Could not delete. Please try again."
+      );
     } finally {
       setDeleteTargetId(null);
     }
   };
 
   // ── Edit ──
+  // const openEditModal = (d: any) => {
+  //   setEditId(d.id);
+  //   setEditValue(d.value.toString());
+  //   setIsOpen(true);
+  // };
+
+  // const closeModal = () => { setIsOpen(false); setEditId(null); setEditValue(""); };
+
+  // const saveEdit = async () => {
+  //   if (!editValue || isNaN(Number(editValue))) {
+  //     addToast("warning", "Invalid input", "Please enter a valid numeric value.");
+  //     return;
+  //   }
+  //   if (Number(editValue) <= 0) {
+  //     addToast("warning", "Invalid value", "Duration must be greater than 0 minutes.");
+  //     return;
+  //   }
+  //   try {
+  //     await axios.put(`/duration/${editId}`, { value: Number(editValue) });
+  //     closeModal();
+  //     await fetchDurations();
+  //     addToast("success", "Updated", `Duration updated to ${editValue} minutes successfully.`);
+  //   } catch (err: any) {
+  //     addToast("error", "Update failed", err?.response?.data?.message || "Could not update duration. Please try again.");
+  //   }
+  // };
+
   const openEditModal = (d: any) => {
     setEditId(d.id);
     setEditValue(d.value.toString());
+    setEditErrors([]); // ✅ clear previous errors
     setIsOpen(true);
   };
 
-  const closeModal = () => { setIsOpen(false); setEditId(null); setEditValue(""); };
+  const closeModal = () => {
+    setIsOpen(false);
+    setEditId(null);
+    setEditValue("");
+    setEditErrors([]);
+  };
 
   const saveEdit = async () => {
-    if (!editValue || isNaN(Number(editValue))) {
-      addToast("warning", "Invalid input", "Please enter a valid numeric value.");
+    const numericValue = Number(editValue);
+
+    if (isNaN(numericValue)) {
+      setEditErrors(["Please enter a valid number"]);
       return;
     }
-    if (Number(editValue) <= 0) {
-      addToast("warning", "Invalid value", "Duration must be greater than 0 minutes.");
+
+    if (numericValue < 5) {
+      setEditErrors(["Minimum duration is 5 min"]);
       return;
     }
+
+    if (numericValue % 5 !== 0) {
+      setEditErrors(["Duration must be multiple of 5"]);
+      return;
+    }
+
     try {
       await axios.put(`/duration/${editId}`, { value: Number(editValue) });
+
       closeModal();
       await fetchDurations();
+
       addToast("success", "Updated", `Duration updated to ${editValue} minutes successfully.`);
     } catch (err: any) {
-      addToast("error", "Update failed", err?.response?.data?.message || "Could not update duration. Please try again.");
+      const apiError = err?.response?.data;
+
+      if (apiError?.errors && Array.isArray(apiError.errors)) {
+        setEditErrors(apiError.errors); // ✅ inline errors
+      } else {
+        setEditErrors([]);
+        addToast(
+          "error",
+          "Update failed",
+          apiError?.message || "Could not update duration. Please try again."
+        );
+      }
     }
   };
 
@@ -357,11 +474,10 @@ export default function DurationPage() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${
-                    page === currentPage
-                      ? "bg-purple-600 text-white border border-purple-500"
-                      : "border border-gray-700 hover:bg-[#1f2937] text-gray-400"
-                  }`}
+                  className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${page === currentPage
+                    ? "bg-purple-600 text-white border border-purple-500"
+                    : "border border-gray-700 hover:bg-[#1f2937] text-gray-400"
+                    }`}
                 >
                   {page}
                 </button>
@@ -397,6 +513,15 @@ export default function DurationPage() {
                 placeholder="e.g. 30"
                 autoFocus
               />
+              {formErrors.length > 0 && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-md p-2 mt-2">
+                  {formErrors.map((err, i) => (
+                    <p key={i} className="text-red-400 text-xs">
+                      • {err}
+                    </p>
+                  ))}
+                </div>
+              )}
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => { setIsAddOpen(false); setValue(""); }}
@@ -435,6 +560,15 @@ export default function DurationPage() {
                 placeholder="Enter duration"
                 autoFocus
               />
+              {editErrors.length > 0 && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-md p-2 mt-2">
+                  {editErrors.map((err, i) => (
+                    <p key={i} className="text-red-400 text-xs">
+                      • {err}
+                    </p>
+                  ))}
+                </div>
+              )}
               <div className="flex justify-end gap-2">
                 <button
                   onClick={closeModal}

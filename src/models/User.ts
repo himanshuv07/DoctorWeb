@@ -58,12 +58,12 @@ User.init(
 // ✅ ASSOCIATIONS (OUTSIDE init)
 export const associateUser = (models: any) => {
   User.belongsToMany(models.Service, {
-    through: "User_Services",
+    through: models.UserService,
     foreignKey: "userId",
     otherKey: "serviceId",
     as: "Services",
   });
-  
+
   // User.hasOne(models.DoctorDetails, {
   //   foreignKey: "userId",
   //   as: "DoctorDetail1",

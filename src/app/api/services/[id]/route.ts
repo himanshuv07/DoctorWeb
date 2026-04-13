@@ -1,122 +1,182 @@
-// GET /api/services/:id
-// PUT /api/services/:id
-// DELETE /api/services/:id
-
 import { NextRequest, NextResponse } from "next/server";
-import sequelize from "@/lib/database";
-import models from "@/models";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { Service, Duration } from "@/models";
 
-// ── Validators ─────────────────────────────
-function validateService(body: any): string[] {
-  const errors: string[] = [];
+type Params = {
+    params: Promise<{ id: string }>;
+};
 
-  if (body.name !== undefined && !body.name.trim()) {
-    errors.push("Service name cannot be empty");
-  }
+export async function GET(req: NextRequest, { params }: Params) {
+    try {
+        const { id } = await params;
 
-  return errors;
+        const service = await Service.findByPk(id, {
+            include: [
+                {
+                    model: Duration,
+                    as: "duration",
+                    attributes: ["id", "value"],
+                },
+            ],
+        });
+
+        if (!service) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Service not found",
+                },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Service fetched successfully",
+                data: service,
+            },
+            { status: 200 }
+        );
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to fetch service",
+                error: error.message,
+            },
+            { status: 500 }
+        );
+    }
 }
 
-// ── GET one service ────────────────────────
-export async function GET(_req: NextRequest, context: any) {
-  try {
-    const { id } = await context.params;
+export async function PUT(req: NextRequest, { params }: Params) {
+    try {
+        const { id } = await params;
+        const body = await req.json();
+        const { name, price, durationId, updatedBy } = body;
 
-    await sequelize.sync();
+        const service = await Service.findByPk(id);
 
-    const service = await models.Service.findByPk(id, {
-      include: [
-        {
-          model: models.Duration,
-          attributes: ["id", "value"],
-        },
-      ],
-    });
+        if (!service) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Service not found",
+                },
+                { status: 404 }
+            );
+        }
 
-    if (!service) {
-      return NextResponse.json(
-        { error: "Service not found" },
-        { status: 404 }
-      );
+        if (durationId) {
+            const duration = await Duration.findByPk(durationId);
+
+            if (!duration) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Selected duration does not exist",
+                    },
+                    { status: 404 }
+                );
+            }
+        }
+
+        if (name) {
+            const existingService = await Service.findOne({
+                where: { name },
+            });
+
+            if (existingService && existingService.id !== service.id) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Service name already exists",
+                    },
+                    { status: 409 }
+                );
+            }
+        }
+
+        if (price !== undefined && Number(price) < 0) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Price must be greater than or equal to 0",
+                },
+                { status: 400 }
+            );
+        }
+
+        await service.update({
+            name: name ?? service.name,
+            price: price ?? service.price,
+            durationId: durationId ?? service.durationId,
+            updatedBy: updatedBy ?? service.updatedBy,
+        });
+
+        const updatedService = await Service.findByPk(service.id, {
+            include: [
+                {
+                    model: Duration,
+                    as: "duration",
+                    attributes: ["id", "value"],
+                },
+            ],
+        });
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Service updated successfully",
+                data: updatedService,
+            },
+            { status: 200 }
+        );
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to update service",
+                error: error.message,
+            },
+            { status: 500 }
+        );
     }
-
-    return NextResponse.json({ service }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 }
 
-// ── UPDATE service ─────────────────────────
-export async function PUT(req: NextRequest, context: any) {
-  try {
-    const { id } = await context.params;
-    const body = await req.json();
+export async function DELETE(req: NextRequest, { params }: Params) {
+    try {
+        const { id } = await params;
 
-    const errors = validateService(body);
-    if (errors.length > 0) {
-      return NextResponse.json({ errors }, { status: 422 });
+        const service = await Service.findByPk(id);
+
+        if (!service) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Service not found",
+                },
+                { status: 404 }
+            );
+        }
+
+        await service.destroy();
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Service deleted successfully",
+            },
+            { status: 200 }
+        );
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to delete service",
+                error: error.message,
+            },
+            { status: 500 }
+        );
     }
-
-    const service = await models.Service.findByPk(id);
-
-    if (!service) {
-      return NextResponse.json(
-        { error: "Service not found" },
-        { status: 404 }
-      );
-    }
-
-    // ✅ Auth
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    const userId = decoded.id;
-
-    await service.update({
-      name: body.name ?? service.name,
-      durationId: body.durationId ?? service.durationId,
-      updatedBy: userId,
-    });
-
-    return NextResponse.json(
-      { message: "Service updated successfully", service },
-      { status: 200 }
-    );
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// ── DELETE service ─────────────────────────
-export async function DELETE(_req: NextRequest, context: any) {
-  try {
-    const { id } = await context.params;
-
-    await sequelize.sync();
-
-    const service = await models.Service.findByPk(id);
-
-    if (!service) {
-      return NextResponse.json(
-        { error: "Service not found" },
-        { status: 404 }
-      );
-    }
-
-    await service.destroy();
-
-    return NextResponse.json(
-      { message: "Service deleted successfully" },
-      { status: 200 }
-    );
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 }

@@ -60,15 +60,10 @@ export const associateService = (models: any) => {
   });
 
   Service.belongsToMany(models.User, {
-    through: "User_Services",
+    through: models.UserService,
     foreignKey: "serviceId",
     otherKey: "userId",
     as: "Users",
-  });
-
-  Service.belongsTo(models.User, {
-    as: "creater",
-    foreignKey: "createdBy",
   });
 };
 
