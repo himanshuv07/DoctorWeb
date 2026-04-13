@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Users, CalendarClock, Stethoscope,
   UserCog, Settings, ChevronLeft, ChevronRight, LogOut, Bell, Search,
+  ServerIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ const navItems = [
   { label: 'Appointments', href: '/dashboard/appointments', icon: CalendarClock },
   { label: 'Doctors',      href: '/dashboard/doctors',      icon: Stethoscope },
   { label: 'Users',        href: '/dashboard/users',        icon: UserCog },
+  { label: 'Services',     href: '/dashboard/services',     icon: ServerIcon },
   { label: 'Duration',     href: '/dashboard/duration',     icon: CalendarClock },
   { label: 'Settings',     href: '/dashboard/settings',     icon: Settings },
 ];

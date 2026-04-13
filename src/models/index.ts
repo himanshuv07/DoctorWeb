@@ -1,22 +1,33 @@
 import sequelize from "../lib/database";
+
 import Customer from "./Customer";
 import User, { associateUser } from "./User";
-import Duration from "./duration"; // ✅ import only
+import Duration from "./duration";
 import Service, { associateService } from "./services";
 
-// ✅ Register models
+// ✅ Register all models
 const models: any = {
   sequelize,
   Customer,
   User,
+  Duration,
   Service,
-  Duration, // ✅ add this
 };
 
-// ✅ CALL ASSOCIATIONS
-associateUser(models);
-associateService(models);
-Duration.associate(models); // ✅ FIXED
+// ✅ IMPORTANT: Run associations AFTER all models are loaded
+const setupAssociations = () => {
+  // User associations (if any)
+  if (associateUser) associateUser(models);
 
-export { sequelize, Customer, User, Service, Duration };
+  // Service associations
+  if (associateService) associateService(models);
+
+  // Duration associations
+  if (Duration.associate) Duration.associate(models);
+};
+
+// ✅ Initialize associations
+setupAssociations();
+
+export { sequelize, Customer, User, Duration, Service };
 export default models;

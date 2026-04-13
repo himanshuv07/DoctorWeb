@@ -54,16 +54,21 @@ Service.init(
 
 // ✅ ASSOCIATIONS (OUTSIDE)
 export const associateService = (models: any) => {
-//   Service.belongsTo(models.Duration, {
-//     foreignKey: "durationId",
-//     as: "duration",
-//   });
+  Service.belongsTo(models.Duration, {
+    foreignKey: "durationId",
+    as: "duration",
+  });
 
   Service.belongsToMany(models.User, {
     through: "User_Services",
     foreignKey: "serviceId",
     otherKey: "userId",
     as: "Users",
+  });
+
+  Service.belongsTo(models.User, {
+    as: "creater",
+    foreignKey: "createdBy",
   });
 };
 

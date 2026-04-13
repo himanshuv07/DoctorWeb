@@ -24,6 +24,7 @@ class Duration extends Model {
 
     Duration.hasMany(models.Service, {
       foreignKey: 'durationId',
+      as: "services",
     });
   }
 }

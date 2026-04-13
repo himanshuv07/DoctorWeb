@@ -1,8 +1,6 @@
 // This file sets up the Sequelize connection and initializes the database. It also includes a function to seed a default admin user if one doesn't already exist. 
 
 import { Sequelize } from 'sequelize';
-import bcrypt from 'bcryptjs';
-import { seedAdminUser } from './adminSeed';
 
 const sequelize = new Sequelize(
   process.env.DB_NAME!,
