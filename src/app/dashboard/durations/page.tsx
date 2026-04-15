@@ -1,9 +1,24 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "@/lib/axios";
-import { Pencil, X, Plus, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
-import { RiDeleteBin6Line } from "react-icons/ri";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type DurationType = {
+  id: number;
+  value: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type FormDataType = {
+  value: string;
+};
+
+const initialForm: FormDataType = { value: "" };
+
+const ENTRIES_OPTIONS = [10, 25, 50, 100];
 
 // ─── Toast System ─────────────────────────────────────────────────────────────
 
@@ -18,20 +33,38 @@ interface Toast {
 
 let toastId = 0;
 
-function ToastIcon({ type }: { type: ToastType }) {
-  const cls = "w-5 h-5 flex-shrink-0";
-  if (type === "success") return <CheckCircle className={cls} />;
-  if (type === "error") return <AlertCircle className={cls} />;
-  if (type === "warning") return <AlertTriangle className={cls} />;
-  return <Info className={cls} />;
-}
-
 const toastStyles: Record<ToastType, { border: string; icon: string; bg: string; title: string }> = {
   success: { bg: "bg-[#0d2818]", border: "border-green-600", icon: "text-green-400", title: "text-green-300" },
   error: { bg: "bg-[#2a0d0d]", border: "border-red-600", icon: "text-red-400", title: "text-red-300" },
   warning: { bg: "bg-[#2a1e0d]", border: "border-yellow-500", icon: "text-yellow-400", title: "text-yellow-300" },
   info: { bg: "bg-[#0d1a2a]", border: "border-blue-500", icon: "text-blue-400", title: "text-blue-300" },
 };
+
+function ToastIcon({ type }: { type: ToastType }) {
+  if (type === "success")
+    return (
+      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+  if (type === "error")
+    return (
+      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+  if (type === "warning")
+    return (
+      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      </svg>
+    );
+  return (
+    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
 
 function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: number) => void }) {
   return (
@@ -41,18 +74,22 @@ function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: numb
         return (
           <div
             key={t.id}
-            className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${s.bg} ${s.border} shadow-lg animate-slide-in pointer-events-auto`}
+            className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${s.bg} ${s.border} shadow-lg pointer-events-auto`}
           >
-            <span className={s.icon}><ToastIcon type={t.type} /></span>
+            <span className={s.icon}>
+              <ToastIcon type={t.type} />
+            </span>
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold ${s.title}`}>{t.title}</p>
-              <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{t.message}</p>
+              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{t.message}</p>
             </div>
             <button
               onClick={() => remove(t.id)}
-              className="text-gray-500 hover:text-gray-300 transition-colors flex-shrink-0 mt-0.5"
+              className="text-slate-500 hover:text-slate-300 transition-colors flex-shrink-0 mt-0.5"
             >
-              <X className="w-4 h-4" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         );
@@ -61,41 +98,42 @@ function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: numb
   );
 }
 
-// ─── Confirm Dialog ───────────────────────────────────────────────────────────
+// ─── Delete Dialog (matches services page exactly) ────────────────────────────
 
-function ConfirmDialog({
-  isOpen,
-  message,
-  onConfirm,
-  onCancel,
-}: {
-  isOpen: boolean;
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  if (!isOpen) return null;
+function DeleteDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] backdrop-blur-sm">
-      <div className="bg-[#161b27] p-6 rounded-xl w-[360px] border border-gray-700 shadow-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-red-400"><AlertTriangle className="w-6 h-6" /></span>
-          <h3 className="text-base font-semibold text-white">Confirm Delete</h3>
-        </div>
-        <p className="text-sm text-gray-400 mb-6 leading-relaxed">{message}</p>
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-[#1f2937] transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium"
-          >
-            Yes, Delete
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-[#1a1d2e] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl z-10">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+            <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Delete Duration</h3>
+            <p className="text-sm text-slate-400 mt-1">This cannot be undone.</p>
+          </div>
+          <div className="flex gap-2.5 w-full">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-2.5 text-sm font-medium rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-red-600 hover:bg-red-500 text-white transition-colors"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -105,17 +143,25 @@ function ConfirmDialog({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DurationPage() {
-  const [durations, setDurations] = useState<any[]>([]);
-  const [value, setValue] = useState("");
+  const [durations, setDurations] = useState<DurationType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
-  const [showEntries, setShowEntries] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingDuration, setEditingDuration] = useState<DurationType | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+
+  const [formData, setFormData] = useState<FormDataType>(initialForm);
   const [formErrors, setFormErrors] = useState<string[]>([]);
-  const [editErrors, setEditErrors] = useState<string[]>([]);
 
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // ── Toast helpers ──
   const addToast = useCallback((type: ToastType, title: string, message: string) => {
     const id = ++toastId;
     setToasts((prev) => [...prev, { id, type, title, message }]);
@@ -126,21 +172,16 @@ export default function DurationPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState("");
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
-
   // ── Fetch ──
   const fetchDurations = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await axios.get("/duration");
-      setDurations(res.data.durations);
+      setDurations(res.data.durations || res.data.data || []);
     } catch (err: any) {
-      addToast("error", "Failed to load", err?.response?.data?.message || "Could not fetch durations. Please try again.");
+      setError("Failed to fetch durations. Please try again.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -148,453 +189,505 @@ export default function DurationPage() {
 
   useEffect(() => { fetchDurations(); }, []);
 
-  // ── Add ──
-  // const addDuration = async () => {
-  //   if (!value || isNaN(Number(value))) {
-  //     addToast("warning", "Invalid input", "Please enter a valid numeric duration value.");
-  //     return;
-  //   }
-  //   if (Number(value) <= 0) {
-  //     addToast("warning", "Invalid value", "Duration must be greater than 0 minutes.");
-  //     return;
-  //   }
-  //   try {
-  //     await axios.post("/duration", { value: Number(value) });
-  //     setValue("");
-  //     setIsAddOpen(false);
-  //     await fetchDurations();
-  //     addToast("success", "Duration added", `${value} minutes has been added successfully.`);
-  //   } catch (err: any) {
-  //     addToast("error", "Add failed", err?.response?.data?.message || "Something went wrong while adding the duration.");
-  //   }
-  // };
+  // ── Filter + paginate ──
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return durations.filter((d) =>
+      !q || String(d.value).includes(q)
+    );
+  }, [durations, search]);
 
-  const addDuration = async () => {
-    // optional basic frontend check
-    if (!value || isNaN(Number(value))) {
-      setFormErrors(["Please enter a valid numeric duration value."]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const onSearch = (v: string) => { setSearch(v); setPage(1); };
+  const onPageSize = (n: number) => { setPageSize(n); setPage(1); };
+
+  const pageButtons = useMemo(() => {
+    const pages: (number | "...")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (page > 3) pages.push("...");
+      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+      if (page < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  }, [page, totalPages]);
+
+  // ── Modal helpers ──
+  const openAddModal = () => {
+    setEditingDuration(null);
+    setFormData(initialForm);
+    setFormErrors([]);
+    setShowModal(true);
+  };
+
+  const openEditModal = (d: DurationType) => {
+    setEditingDuration(d);
+    setFormData({ value: String(d.value) });
+    setFormErrors([]);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingDuration(null);
+    setFormData(initialForm);
+    setFormErrors([]);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ── Submit (add / edit) ──
+  const handleSubmit = async () => {
+    const num = Number(formData.value);
+
+    // Reset previous errors
+    setFormErrors([]);
+
+    // Required + number check
+    if (!formData.value || isNaN(num)) {
+      const msg = "Please enter a valid numeric duration.";
+      setFormErrors([msg]);
+      addToast("error", "Invalid Input", msg);
+      return;
+    }
+
+    // Min check
+    if (num < 5) {
+      const msg = "Minimum duration is 5 minutes.";
+      setFormErrors([msg]);
+      addToast("warning", "Too Small", msg);
+      return;
+    }
+
+    // ✅ NEW: Max check (<= 60 only)
+    if (num > 60) {
+      const msg = "Maximum duration cannot exceed 60 minutes.";
+      setFormErrors([msg]);
+      addToast("error", "Limit Exceeded", msg);
+      return;
+    }
+
+    // Multiple of 5 check
+    if (num % 5 !== 0) {
+      const msg = "Duration must be in multiples of 5 minutes (5, 10, 15...).";
+      setFormErrors([msg]);
+      addToast("warning", "Invalid Step", msg);
       return;
     }
 
     try {
-      await axios.post("/duration", { value: Number(value) });
+      setSubmitLoading(true);
 
-      setValue("");
-      setFormErrors([]); // ✅ clear errors
-      setIsAddOpen(false);
+      if (editingDuration) {
+        await axios.put(`/duration/${editingDuration.id}`, { value: num });
+        addToast("success", "Updated", `Duration updated to ${num} minutes.`);
+      } else {
+        await axios.post("/duration", { value: num });
+        addToast("success", "Added", `${num} minutes added successfully.`);
+      }
 
       await fetchDurations();
-
-      addToast("success", "Duration added", `${value} minutes has been added successfully.`);
+      closeModal();
     } catch (err: any) {
       const apiError = err?.response?.data;
 
       if (apiError?.errors && Array.isArray(apiError.errors)) {
-        setFormErrors(apiError.errors); // ✅ inline errors
+        setFormErrors(apiError.errors);
       } else {
-        setFormErrors([]);
-        addToast(
-          "error",
-          "Add failed",
-          apiError?.message || "Something went wrong while adding the duration."
-        );
+        const msg = apiError?.message || "Something went wrong.";
+        setFormErrors([msg]);
+        addToast("error", "Error", msg);
       }
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
   // ── Delete ──
-  // const askDelete = (id: number) => {
-  //   setDeleteTargetId(id);
-  //   setConfirmOpen(true);
-  // };
-
-
-
-  // const confirmDelete = async () => {
-  //   if (!deleteTargetId) return;
-  //   setConfirmOpen(false);
-  //   try {
-  //     await axios.delete(`/duration/${deleteTargetId}`);
-  //     await fetchDurations();
-  //     addToast("success", "Deleted", "The duration has been removed successfully.");
-  //   } catch (err: any) {
-  //     addToast("error", "Delete failed", err?.response?.data?.message || "Could not delete. Please try again.");
-  //   } finally {
-  //     setDeleteTargetId(null);
-  //   }
-  // };
-
-  const askDelete = (id: number) => {
-    setDeleteTargetId(id);
-    setConfirmOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTargetId) return;
-    setConfirmOpen(false);
-
+  const handleDeleteConfirm = async () => {
+    if (deleteId === null) return;
     try {
-      await axios.delete(`/duration/${deleteTargetId}`);
+      await axios.delete(`/duration/${deleteId}`);
       await fetchDurations();
-
       addToast("success", "Deleted", "The duration has been removed successfully.");
     } catch (err: any) {
-      addToast(
-        "error",
-        "Delete failed",
-        err?.response?.data?.message || "Could not delete. Please try again."
-      );
+      addToast("error", "Delete failed", err?.response?.data?.message || "Could not delete. Please try again.");
     } finally {
-      setDeleteTargetId(null);
+      setDeleteId(null);
     }
   };
 
-  // ── Edit ──
-  // const openEditModal = (d: any) => {
-  //   setEditId(d.id);
-  //   setEditValue(d.value.toString());
-  //   setIsOpen(true);
-  // };
+  // ── Loading state ──
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+          <p className="text-sm text-slate-400 font-medium">Loading durations...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // const closeModal = () => { setIsOpen(false); setEditId(null); setEditValue(""); };
+  // ── Error state ──
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
+            <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-slate-200 font-semibold">{error}</p>
+            <p className="text-slate-500 text-sm mt-1">Check your connection and try again</p>
+          </div>
+          <button
+            onClick={fetchDurations}
+            className="px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // const saveEdit = async () => {
-  //   if (!editValue || isNaN(Number(editValue))) {
-  //     addToast("warning", "Invalid input", "Please enter a valid numeric value.");
-  //     return;
-  //   }
-  //   if (Number(editValue) <= 0) {
-  //     addToast("warning", "Invalid value", "Duration must be greater than 0 minutes.");
-  //     return;
-  //   }
-  //   try {
-  //     await axios.put(`/duration/${editId}`, { value: Number(editValue) });
-  //     closeModal();
-  //     await fetchDurations();
-  //     addToast("success", "Updated", `Duration updated to ${editValue} minutes successfully.`);
-  //   } catch (err: any) {
-  //     addToast("error", "Update failed", err?.response?.data?.message || "Could not update duration. Please try again.");
-  //   }
-  // };
-
-  const openEditModal = (d: any) => {
-    setEditId(d.id);
-    setEditValue(d.value.toString());
-    setEditErrors([]); // ✅ clear previous errors
-    setIsOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsOpen(false);
-    setEditId(null);
-    setEditValue("");
-    setEditErrors([]);
-  };
-
-  const saveEdit = async () => {
-    const numericValue = Number(editValue);
-
-    if (isNaN(numericValue)) {
-      setEditErrors(["Please enter a valid number"]);
-      return;
-    }
-
-    if (numericValue < 5) {
-      setEditErrors(["Minimum duration is 5 min"]);
-      return;
-    }
-
-    if (numericValue % 5 !== 0) {
-      setEditErrors(["Duration must be multiple of 5"]);
-      return;
-    }
-
-    try {
-      await axios.put(`/duration/${editId}`, { value: Number(editValue) });
-
-      closeModal();
-      await fetchDurations();
-
-      addToast("success", "Updated", `Duration updated to ${editValue} minutes successfully.`);
-    } catch (err: any) {
-      const apiError = err?.response?.data;
-
-      if (apiError?.errors && Array.isArray(apiError.errors)) {
-        setEditErrors(apiError.errors); // ✅ inline errors
-      } else {
-        setEditErrors([]);
-        addToast(
-          "error",
-          "Update failed",
-          apiError?.message || "Could not update duration. Please try again."
-        );
-      }
-    }
-  };
-
-  // ── Filter + Paginate ──
-  const filtered = durations.filter((d) => d.value.toString().includes(search));
-  const totalPages = Math.max(1, Math.ceil(filtered.length / showEntries));
-  const paginated = filtered.slice((currentPage - 1) * showEntries, currentPage * showEntries);
-
+  // ── Main render ──
   return (
     <>
       <ToastContainer toasts={toasts} remove={removeToast} />
 
-      <ConfirmDialog
-        isOpen={confirmOpen}
-        message="Are you sure you want to delete this duration? This action cannot be undone."
-        onConfirm={confirmDelete}
-        onCancel={() => { setConfirmOpen(false); setDeleteTargetId(null); }}
-      />
-
-      <div className="p-6 text-white min-h-screen bg-[#0d1117]">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white">Duration</h2>
-          <p className="text-sm text-gray-400 mt-1">
-            <span className="text-gray-500">Dashboard</span>
-            <span className="mx-2 text-gray-600">&gt;</span>
-            <span className="text-white">Duration</span>
-          </p>
+      <div className="p-6 space-y-5">
+        {/* Page heading */}
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Duration Table</h1>
+          <nav className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+            <span className="hover:text-slate-300 cursor-pointer transition-colors">Dashboard</span>
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-slate-300">Duration</span>
+          </nav>
         </div>
 
-        <div className="bg-[#161b27] border border-gray-800 rounded-xl overflow-hidden">
-          {/* Card Header */}
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-800">
-            <span className="text-purple-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </span>
-            <h3 className="text-sm font-semibold tracking-widest uppercase text-gray-200">Duration Datatable</h3>
+        {/* Card */}
+        <div className="bg-[#1a1d2e] border border-white/[0.06] rounded-2xl overflow-hidden shadow-xl">
+          {/* Card header */}
+          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2">
+            <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 className="text-xs font-bold text-slate-300 uppercase tracking-widest">Duration Datatable</h2>
           </div>
 
-          {/* Controls */}
-          <div className="flex justify-between items-center px-5 py-4">
-            <button
-              onClick={() => setIsAddOpen(true)}
-              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 transition-colors px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Add Duration
-            </button>
-            <div className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-              </svg>
-              <input
-                placeholder="Search durations..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="bg-[#1f2937] border border-gray-700 text-sm px-3 py-2 pl-9 rounded-lg w-56 focus:outline-none focus:border-purple-500 transition-colors placeholder-gray-500"
-              />
+          <div className="p-5">
+            {/* Top controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+              <button
+                onClick={openAddModal}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-violet-900/40"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Duration
+              </button>
+
+              <div className="relative">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search durations..."
+                  value={search}
+                  onChange={(e) => onSearch(e.target.value)}
+                  className="pl-9 pr-8 py-2.5 w-60 bg-white/[0.05] border border-white/[0.08] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/50 transition-all"
+                />
+                {search && (
+                  <button
+                    onClick={() => onSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Show entries */}
-          <div className="flex items-center gap-2 px-5 pb-3 text-sm text-gray-400">
-            <span>Show</span>
-            <select
-              value={showEntries}
-              onChange={(e) => { setShowEntries(Number(e.target.value)); setCurrentPage(1); }}
-              className="bg-[#1f2937] border border-gray-700 rounded px-2 py-1 text-white text-sm focus:outline-none"
-            >
-              {[5, 10, 25, 50].map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <span>entries</span>
-            <span className="ml-auto text-gray-500 text-xs">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
-          </div>
+            {/* Result count */}
+            <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+              <span className="text-xs text-slate-500 font-medium">Durations List</span>
+              <span className="ml-auto text-xs text-slate-600 font-medium">
+                {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+              </span>
+            </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#1a2130] text-gray-400 uppercase text-xs tracking-wider">
-                <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Value (Minutes) <span className="text-gray-600">⇅</span></th>
-                  <th className="px-5 py-3 text-left font-semibold">Created At <span className="text-gray-600">⇅</span></th>
-                  <th className="px-5 py-3 text-left font-semibold">Updated At <span className="text-gray-600">⇅</span></th>
-                  <th className="px-5 py-3 text-left font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={4} className="text-center py-10 text-gray-500">Loading...</td></tr>
-                ) : paginated.length === 0 ? (
-                  <tr><td colSpan={4} className="text-center py-10 text-gray-500">No data found</td></tr>
-                ) : (
-                  paginated.map((d) => (
-                    <tr key={d.id} className="border-t border-gray-800/60 hover:bg-[#1a2130] transition-colors">
-                      <td className="px-5 py-3.5 text-white font-medium">{d.value} min</td>
-                      <td className="px-5 py-3.5 text-gray-400">{new Date(d.createdAt).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-gray-400">{new Date(d.updatedAt).toLocaleString()}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openEditModal(d)}
-                            className="p-1.5 rounded border border-gray-700 text-blue-400 hover:text-blue-300 hover:bg-[#2a3444] transition-colors"
-                            title="Edit"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => askDelete(d.id)}
-                            className="p-1.5 rounded border border-gray-700 text-red-400 hover:text-red-300 hover:bg-[#2a3444] transition-colors"
-                            title="Delete"
-                          >
-                            <RiDeleteBin6Line className="w-4 h-4" />
-                          </button>
+            {/* Show entries */}
+            <div className="flex items-center gap-2 mb-4 text-xs text-slate-500">
+              Show
+              <select
+                value={pageSize}
+                onChange={(e) => onPageSize(Number(e.target.value))}
+                className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-2 py-1 text-slate-300 outline-none focus:ring-1 focus:ring-violet-500/40 cursor-pointer [&>option]:bg-[#13152a]"
+              >
+                {ENTRIES_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              entries
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-white/[0.04] border-b border-white/[0.06]">
+                    <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                      Value (Minutes)
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                      Created At
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                      Updated At
+                    </th>
+                    <th className="px-4 py-3 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {paginated.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-20 text-center">
+                        <div className="flex flex-col items-center gap-3 text-slate-600">
+                          <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <p className="text-sm font-semibold">No durations found</p>
+                          {search && <p className="text-xs">Try adjusting your search</p>}
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    paginated.map((d, i) => (
+                      <tr
+                        key={d.id ?? i}
+                        className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
+                      >
+                        {/* Value cell — styled like the service name cell */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-violet-500/20 border border-violet-500/25 flex items-center justify-center shrink-0">
+                              <svg className="w-3.5 h-3.5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+                              {d.value} Minutes
+                            </span>
+                          </div>
+                        </td>
 
-          {/* Pagination Footer */}
-          <div className="flex justify-between items-center px-5 py-4 border-t border-gray-800 text-sm text-gray-400">
-            <span>
-              Showing{" "}
-              <span className="text-white font-medium">{filtered.length === 0 ? 0 : (currentPage - 1) * showEntries + 1}</span>
-              {" "}to{" "}
-              <span className="text-white font-medium">{Math.min(currentPage * showEntries, filtered.length)}</span>
-              {" "}of{" "}
-              <span className="text-white font-medium">{filtered.length}</span> entries
-            </span>
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 rounded border border-gray-700 hover:bg-[#1f2937] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <td className="px-4 py-3.5 text-slate-400 text-xs">
+                          {d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}
+                        </td>
+
+                        <td className="px-4 py-3.5 text-slate-400 text-xs">
+                          {d.updatedAt ? new Date(d.updatedAt).toLocaleString() : "-"}
+                        </td>
+
+                        {/* Action buttons — identical to services page */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => openEditModal(d)}
+                              title="Edit"
+                              className="w-7 h-7 rounded-lg bg-violet-500/10 hover:bg-violet-500/25 border border-violet-500/20 flex items-center justify-center text-violet-400 transition-all hover:scale-110"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(d.id)}
+                              title="Delete"
+                              className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 flex items-center justify-center text-red-400 transition-all hover:scale-110"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+              <p className="text-xs text-slate-500">
+                Showing{" "}
+                <span className="text-slate-300 font-medium">
+                  {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}
+                </span>{" "}to{" "}
+                <span className="text-slate-300 font-medium">
+                  {Math.min(page * pageSize, filtered.length)}
+                </span>{" "}of{" "}
+                <span className="text-slate-300 font-medium">{filtered.length}</span> entries
+                {durations.length !== filtered.length && (
+                  <span className="text-slate-600"> (filtered from {durations.length})</span>
+                )}
+              </p>
+
+              <div className="flex items-center gap-1">
                 <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${page === currentPage
-                    ? "bg-purple-600 text-white border border-purple-500"
-                    : "border border-gray-700 hover:bg-[#1f2937] text-gray-400"
-                    }`}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-white/[0.08] text-slate-400 hover:bg-white/5 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                  {page}
+                  Previous
                 </button>
-              ))}
+
+                {pageButtons.map((p, i) =>
+                  p === "..." ? (
+                    <span key={`d${i}`} className="px-1.5 text-slate-600 text-xs select-none">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p as number)}
+                      className={`w-8 h-8 text-xs font-medium rounded-lg transition-all ${page === p
+                        ? "bg-violet-600 text-white shadow-md shadow-violet-900/40"
+                        : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-white/[0.08]"
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-white/[0.08] text-slate-400 hover:bg-white/5 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ADD / EDIT MODAL — matches services page modal exactly */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeModal} />
+          <div className="relative bg-[#1a1d2e] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl z-10">
+            {/* Modal header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <h3 className="text-base font-bold text-white">
+                {editingDuration ? "Edit Duration" : "Add Duration"}
+              </h3>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1.5 rounded border border-gray-700 hover:bg-[#1f2937] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={closeModal}
+                className="w-9 h-9 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors flex items-center justify-center"
               >
-                Next
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="grid gap-4 px-5 py-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-300">
+                  Duration (Minutes)
+                </label>
+                <input
+                  type="number"
+                  name="value"
+                  min={5}
+                  max={60}
+                  step={5}
+                  placeholder="e.g. 30"
+                  value={formData.value}
+                  onChange={handleChange}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                  autoFocus
+                  className="w-full rounded-xl border border-white/10 bg-[#141a2f] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500/60"
+                />
+              </div>
+
+              {/* Inline validation errors */}
+              {formErrors.length > 0 && (
+                <div className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3">
+                  {formErrors.map((err, i) => (
+                    <p key={i} className="text-red-400 text-xs flex items-center gap-1.5">
+                      <span>•</span> {err}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal footer */}
+            <div className="flex gap-2.5 w-full border-t border-white/10 px-5 py-4">
+              <button
+                onClick={closeModal}
+                className="flex-1 py-2.5 text-sm font-medium rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitLoading}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-60"
+              >
+                {submitLoading
+                  ? editingDuration ? "Updating..." : "Submitting..."
+                  : editingDuration ? "Update" : "Submit"}
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* ADD MODAL */}
-        {isAddOpen && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-[#161b27] p-6 rounded-xl w-[380px] border border-gray-700 shadow-2xl">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-semibold text-white">Add Duration</h3>
-                <button onClick={() => { setIsAddOpen(false); setValue(""); }} className="text-gray-400 hover:text-white transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <label className="block text-sm text-gray-400 mb-1.5">Duration (Minutes)</label>
-              <input
-                type="number"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addDuration()}
-                className="w-full bg-[#1f2937] border border-gray-600 focus:border-purple-500 px-3 py-2 rounded-lg mb-5 text-white placeholder-gray-500 focus:outline-none transition-colors"
-                placeholder="e.g. 30"
-                autoFocus
-              />
-              {formErrors.length > 0 && (
-                <div className="bg-red-900/20 border border-red-500/30 rounded-md p-2 mt-2">
-                  {formErrors.map((err, i) => (
-                    <p key={i} className="text-red-400 text-xs">
-                      • {err}
-                    </p>
-                  ))}
-                </div>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => { setIsAddOpen(false); setValue(""); }}
-                  className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-[#1f2937] transition-colors text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={addDuration}
-                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors text-sm font-medium"
-                >
-                  Add Duration
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* EDIT MODAL */}
-        {isOpen && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-[#161b27] p-6 rounded-xl w-[380px] border border-gray-700 shadow-2xl">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-semibold text-white">Edit Duration</h3>
-                <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <label className="block text-sm text-gray-400 mb-1.5">Duration (Minutes)</label>
-              <input
-                type="number"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                className="w-full bg-[#1f2937] border border-gray-600 focus:border-purple-500 px-3 py-2 rounded-lg mb-5 text-white placeholder-gray-500 focus:outline-none transition-colors"
-                placeholder="Enter duration"
-                autoFocus
-              />
-              {editErrors.length > 0 && (
-                <div className="bg-red-900/20 border border-red-500/30 rounded-md p-2 mt-2">
-                  {editErrors.map((err, i) => (
-                    <p key={i} className="text-red-400 text-xs">
-                      • {err}
-                    </p>
-                  ))}
-                </div>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-[#1f2937] transition-colors text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveEdit}
-                  className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors text-sm font-medium"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <style>{`
-        @keyframes slide-in {
-          from { opacity: 0; transform: translateX(60px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        .animate-slide-in { animation: slide-in 0.25s ease; }
-      `}</style>
+      {/* DELETE DIALOG */}
+      {deleteId !== null && (
+        <DeleteDialog
+          onCancel={() => setDeleteId(null)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
     </>
   );
 }

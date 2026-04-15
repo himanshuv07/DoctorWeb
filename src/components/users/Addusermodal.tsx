@@ -38,7 +38,7 @@ const EMPTY: FormState = {
 }
 
 // ── Validators ───────────────────────────────────────────────────────────────
-const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
 const isValidPhone = (v: string) => /^\d{10}$/.test(v.trim())
 const isValidPassword = (v: string) =>
   /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/.test(v)
@@ -463,7 +463,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                   <span className={form.speciality.length > 0 ? "text-slate-200" : "text-slate-600"}>
                     {form.speciality.length > 0
                       ? form.speciality[0]        // show the name directly instead of "1 selected"
-                      : "Select speciality..."} 
+                      : "Select speciality..."}
                   </span>
                   <svg
                     className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${specOpen ? "rotate-180" : ""}`}

@@ -13,13 +13,15 @@ const roleIcons: Record<Role, string> = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<Role>('Admin');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+
+  const [formData, setFormData] = useState({ email: 'admin@gmail.com', password: 'admin@123' });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,12 @@ export default function LoginPage() {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role }),
+      // body: JSON.stringify({ email, password, role }),
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        role
+      }),
     });
 
     const data = await res.json();
@@ -129,8 +136,9 @@ export default function LoginPage() {
                   <input
                     type="email"
                     placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    // onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-[11px] text-[13.5px] text-white placeholder-white/20 outline-none focus:border-violet-500/60 focus:bg-violet-500/[0.06] transition-all duration-200"
                   />
@@ -152,8 +160,9 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    // onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-11 py-[11px] text-[13.5px] text-white placeholder-white/20 outline-none focus:border-violet-500/60 focus:bg-violet-500/[0.06] transition-all duration-200"
                   />
@@ -197,8 +206,8 @@ export default function LoginPage() {
                 >
                   <div
                     className={`w-4 h-4 rounded flex items-center justify-center border transition-all duration-150 flex-shrink-0 ${remember
-                        ? 'bg-violet-600 border-violet-600'
-                        : 'bg-transparent border-white/20 group-hover:border-white/40'
+                      ? 'bg-violet-600 border-violet-600'
+                      : 'bg-transparent border-white/20 group-hover:border-white/40'
                       }`}
                   >
                     {remember && (

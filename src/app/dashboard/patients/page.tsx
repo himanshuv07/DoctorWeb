@@ -174,8 +174,8 @@ export default function PatientsPage() {
         if (!formData.lname.trim()) newErrors.lname = "Last name is required";
         if (!formData.phone.trim()) {
             newErrors.phone = "Phone is required";
-        } else if (!/^[0-9]{10,15}$/.test(formData.phone.trim())) {
-            newErrors.phone = "Phone must be 10 to 15 digits";
+        } else if (!/^[0-9]{10}$/.test(formData.phone.trim())) {
+            newErrors.phone = "Phone must be 10 digits number";
         }
 
         if (!formData.email.trim()) {
