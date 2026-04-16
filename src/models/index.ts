@@ -1,10 +1,11 @@
-import sequelize from "../lib/database";
-import Customer from "./patients";
+import sequelize from "@/lib/database";
+import Customer from "./Customer";
 import User, { associateUser } from "./User";
-import UserService from "./UserServices";
-import Duration from "./duration";
-import Service, { associateService } from "./services";
-import Patient from "./patients";
+import UserService from "./UserService";
+import Service, { associateService } from "./Service";
+import Duration from "./Duration";
+import Patient from "./Patient";
+import Clinics from "./clinicSetting";
 
 const models: any = {
   sequelize,
@@ -14,12 +15,27 @@ const models: any = {
   Service,
   Duration,
   Patient,
+  Clinics,
 };
 
+// ✅ Associations
 associateUser(models);
 associateService(models);
 Duration.associate(models);
 Patient.associate(models);
 
-export { sequelize, Customer, User, UserService, Service, Duration, Patient };
+// ❗ Safe call (won’t crash if not defined)
+Clinics.associate(models);
+
+export {
+  sequelize,
+  Customer,
+  User,
+  UserService,
+  Service,
+  Duration,
+  Patient,
+  Clinics,
+};
+
 export default models;
