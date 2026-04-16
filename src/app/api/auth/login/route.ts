@@ -28,7 +28,11 @@ export async function POST(req: NextRequest) {
 
         // 3. create a token
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            {
+                id: user.id,
+                email: user.email,
+                role: user.role, // ✅ add this
+            },
             process.env.JWT_SECRET!,
             { expiresIn: '1d' }
         );
@@ -44,9 +48,16 @@ export async function POST(req: NextRequest) {
                 role: user.role,
             }
         });
+        // response.cookies.set('token', token, {
+        //     httpOnly: true,
+        //     maxAge: 60 * 60 * 24, // 1 day
+        // });
+
         response.cookies.set('token', token, {
             httpOnly: true,
-            maxAge: 60 * 60 * 24, // 1 day
+            secure: true,       // ✅ required in production (HTTPS)
+            sameSite: 'strict', // ✅ prevents CSRF
+            maxAge: 60 * 60 * 24,
         });
 
         return response;

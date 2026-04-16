@@ -146,28 +146,28 @@ export async function PUT(req: NextRequest, context: any) {
     }
 }
 
-    // ── DELETE /api/duration/:id ─────────────────────────────────
-    export async function DELETE(_req: NextRequest, context: any) {
-        try {
-            const { id } = await context.params;
-            await sequelize.sync();
+// ── DELETE /api/duration/:id ─────────────────────────────────
+export async function DELETE(_req: NextRequest, context: any) {
+    try {
+        const { id } = await context.params;
+        await sequelize.sync();
 
-            const duration = await models.Duration.findByPk(id);
+        const duration = await models.Duration.findByPk(id);
 
-            if (!duration) {
-                return NextResponse.json(
-                    { error: "Duration not found." },
-                    { status: 404 }
-                );
-            }
-
-            await duration.destroy();
-
+        if (!duration) {
             return NextResponse.json(
-                { message: "Duration deleted successfully." },
-                { status: 200 }
+                { error: "Duration not found." },
+                { status: 404 }
             );
-        } catch (error: any) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        await duration.destroy();
+
+        return NextResponse.json(
+            { message: "Duration deleted successfully." },
+            { status: 200 }
+        );
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
+}

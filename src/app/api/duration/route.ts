@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import models from "@/models";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { getUser } from "@/lib/getUser";
 
 const MINIMUM_DURATION = Number(process.env.MINIMUM_DURATION) || 5;
 
@@ -27,9 +26,21 @@ function validateDuration(value: any): string[] {
 }
 
 // ── GET /api/duration ────────────────────────────────────────
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const user = getUser(req);
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const durations = await models.Duration.findAll({
+      // ✅ Admin → all, others → own
+      // where: user.role === "Admin" ? {} : { createdBy: user.id },
+
       attributes: ["id", "value", "createdAt", "updatedAt"],
       order: [["value", "ASC"]],
     });
@@ -39,7 +50,6 @@ export async function GET() {
         success: true,
         message: "Durations fetched successfully",
         data: durations,
-        durations,
       },
       { status: 200 }
     );
@@ -58,21 +68,14 @@ export async function GET() {
 // ── POST /api/duration ───────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    // ✅ Get token from cookie
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
+    const user = getUser(req);
 
-    if (!token) {
+    if (!user) {
       return NextResponse.json(
         { message: "Unauthorized" },
         { status: 401 }
       );
     }
-
-    // ✅ Decode token
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-
-    const userId = decoded.id; // ✅ REAL USER ID
 
     const body = await req.json();
     const { value } = body;
@@ -87,8 +90,8 @@ export async function POST(req: NextRequest) {
     const [duration, created] = await models.Duration.findOrCreate({
       where: { value: numericValue },
       defaults: {
-        createdBy: userId,
-        updatedBy: null,
+        createdBy: user.id, // ✅ from middleware
+        updatedBy: user.id,
       },
     });
 
@@ -105,8 +108,8 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: any) {
     return NextResponse.json(
-      { message: "Invalid token" },
-      { status: 401 }
+      { message: "Failed to create duration", error: error.message },
+      { status: 500 }
     );
   }
 }

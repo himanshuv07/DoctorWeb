@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import models from "@/models";
+import { Patient, User } from "@/models";
+import { getUser } from "@/lib/getUser";
 
-const Patient = models.Patient;
-const User = models.User;
+// type Params = {
+//     params: Promise<{ id: string }>;
+// };
 
-export async function GET() {
+// ================== GET ==================
+export async function GET(req: NextRequest) {
     try {
+        const user = getUser(req);
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
         const patients = await Patient.findAll({
+
+            // ✅ ROLE-BASED FILTER
+            // where: user.role === "Admin" ? {} : { createdBy: user.id },
+
             include: [
                 {
                     model: User,
@@ -42,8 +58,18 @@ export async function GET() {
     }
 }
 
+// ================== POST ==================
 export async function POST(req: NextRequest) {
     try {
+        const user = getUser(req);
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
         const body = await req.json();
 
         const {
@@ -58,8 +84,6 @@ export async function POST(req: NextRequest) {
             city,
             state,
             zipCode,
-            createdBy,
-            updatedBy,
         } = body;
 
         if (
@@ -72,8 +96,7 @@ export async function POST(req: NextRequest) {
             !address1 ||
             !city ||
             !state ||
-            !zipCode ||
-            !createdBy
+            !zipCode
         ) {
             return NextResponse.json(
                 {
@@ -110,8 +133,8 @@ export async function POST(req: NextRequest) {
             city,
             state,
             zipCode,
-            createdBy,
-            updatedBy: updatedBy ?? null,
+            createdBy: user.id, // ✅ dynamic user
+            updatedBy: user.id,
         });
 
         const newPatient = await Patient.findByPk(patient.id, {

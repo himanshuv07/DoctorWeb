@@ -261,31 +261,31 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="relative z-10 bg-[#13152a] border border-white/10 rounded-2xl w-full max-w-xl
-                      shadow-2xl shadow-black/60 flex flex-col max-h-[90vh]">
+      <div className="relative z-10 bg-[#13152a] border border-white/10 rounded-xl sm:rounded-2xl w-full max-w-xl
+                      shadow-2xl shadow-black/60 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-500/20 border border-violet-500/30
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-white/[0.06] shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-violet-500/20 border border-violet-500/30
                             flex items-center justify-center">
-              <svg className="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">
+              <h2 className="text-sm sm:text-base font-bold text-white">
                 {isEdit ? "Edit User" : "Add New User"}
               </h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 line-clamp-1">
                 {isEdit ? "Update the user's details below" : "Fill in the form to create a new user"}
               </p>
             </div>
@@ -293,10 +293,10 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center
                        text-slate-500 hover:text-slate-200 transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -309,21 +309,21 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
           autoComplete="off"
           className="flex flex-col flex-1 overflow-hidden"
         >
-          <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+          <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4 sm:py-5 space-y-3 sm:space-y-4">
 
             {/* General error banner */}
             {errs.general && (
-              <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25">
-                <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-red-500/10 border border-red-500/25">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 </svg>
-                <p className="text-sm text-red-400">{errs.general}</p>
+                <p className="text-xs sm:text-sm text-red-400">{errs.general}</p>
               </div>
             )}
 
             {/* Row 1 — First / Last Name */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Field label="First Name" id="modal-fname" required error={errs.firstName}>
                 <input
                   id="modal-fname"
@@ -359,7 +359,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
             </Field>
 
             {/* Row 2 — Phone / Gender */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Field label="Phone" id="modal-phone" required error={errs.phone}>
                 <div className="relative">
                   <input
@@ -373,7 +373,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                     className={inputCls(!!errs.phone)}
                   />
                   {/* live digit counter */}
-                  <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono
+                  <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] font-mono
                     ${form.phone.length === 10 ? "text-emerald-500" : "text-slate-600"}`}>
                     {form.phone.length}/10
                   </span>
@@ -395,7 +395,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
             </div>
 
             {/* Row 3 — Role / Password */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Field label="Role" id="modal-role">
                 <select
                   id="modal-role"
@@ -444,7 +444,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
             {/* Specialities — doctor only */}
             {form.role === "doctor" && (
               <div className="space-y-2" ref={specRef}>
-                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   Specialities
                   <span className="text-violet-400 ml-0.5">*</span>
                 </p>
@@ -453,8 +453,8 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                 <button
                   type="button"
                   onClick={() => { setSpecOpen(v => !v); setSpecSearch("") }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl
-                  bg-[#0d0f1e] border text-sm transition-all
+                  className={`w-full flex items-center justify-between px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl
+                  bg-[#0d0f1e] border text-xs sm:text-sm transition-all
                   ${specOpen
                       ? "border-violet-500/50 ring-2 ring-violet-500/40"
                       : "border-white/10 hover:border-white/20"
@@ -466,7 +466,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                       : "Select speciality..."}
                   </span>
                   <svg
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${specOpen ? "rotate-180" : ""}`}
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 transition-transform duration-200 ${specOpen ? "rotate-180" : ""}`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -475,11 +475,11 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
 
                 {/* Selected tags */}
                 {form.speciality.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1">
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-1">
                     {form.speciality.map(s => (
                       <span
                         key={s}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium
+                        className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium
                        bg-emerald-500/20 border border-emerald-500/40 text-emerald-400"
                       >
                         {s}
@@ -488,7 +488,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                           onClick={() => toggleSpec(s)}
                           className="hover:text-white transition-colors ml-0.5"
                         >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
@@ -499,12 +499,12 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
 
                 {/* Dropdown */}
                 {specOpen && (
-                  <div className="rounded-xl border border-white/10 bg-[#0d0f1e] shadow-2xl shadow-black/60 overflow-hidden">
+                  <div className="rounded-lg sm:rounded-xl border border-white/10 bg-[#0d0f1e] shadow-2xl shadow-black/60 overflow-hidden">
 
                     {/* Search */}
                     <div className="p-2 border-b border-white/[0.06]">
                       <div className="relative">
-                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500"
+                        <svg className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500"
                           fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                             d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
@@ -515,24 +515,24 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                           placeholder="Search specialities..."
                           value={specSearch}
                           onChange={e => setSpecSearch(e.target.value)}
-                          className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/[0.04] border border-white/10
-                         text-sm text-slate-200 placeholder:text-slate-600 outline-none
+                          className="w-full pl-7 sm:pl-8 pr-2.5 sm:pr-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg bg-white/[0.04] border border-white/10
+                         text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 outline-none
                          focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all"
                         />
                       </div>
                     </div>
 
                     {/* Options list */}
-                    <div className="max-h-48 overflow-y-auto py-1">
+                    <div className="max-h-40 sm:max-h-48 overflow-y-auto py-1">
                       {servicesLoading ? (
-                        <div className="flex items-center gap-2 px-4 py-3">
-                          <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-violet-400 rounded-full animate-spin" />
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3">
+                          <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 border-2 border-white/20 border-t-violet-400 rounded-full animate-spin" />
                           <span className="text-xs text-slate-500">Loading...</span>
                         </div>
                       ) : services.filter(s =>
                         s.name.toLowerCase().includes(specSearch.toLowerCase())
                       ).length === 0 ? (
-                        <p className="text-xs text-slate-500 px-4 py-3">No specialities found.</p>
+                        <p className="text-xs text-slate-500 px-3 sm:px-4 py-2.5 sm:py-3">No specialities found.</p>
                       ) : (
                         services
                           .filter(s => s.name.toLowerCase().includes(specSearch.toLowerCase()))
@@ -543,7 +543,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                                 key={s.id}
                                 type="button"
                                 onClick={() => toggleSpec(s.name)}
-                                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm
+                                className={`w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm
                                 transition-colors text-left
                                 ${selected
                                     ? "bg-emerald-500/10 text-emerald-400"
@@ -552,7 +552,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                               >
                                 <span>{s.name}</span>
                                 {selected && (
-                                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                   </svg>
                                 )}
@@ -568,7 +568,7 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                         <button
                           type="button"
                           onClick={() => setForm(f => ({ ...f, speciality: [] }))}
-                          className="w-full py-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors rounded-lg
+                          className="w-full py-1 sm:py-1.5 text-[10px] sm:text-xs text-slate-500 hover:text-red-400 transition-colors rounded-lg
                          hover:bg-red-500/10 text-center"
                         >
                           Clear all selections
@@ -579,8 +579,8 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                 )}
 
                 {errs.speciality && (
-                  <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1">
-                    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <p className="text-[10px] sm:text-[11px] text-red-400 mt-1 flex items-center gap-1">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     </svg>
@@ -591,10 +591,10 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
             )}
 
             {/* Active Toggle */}
-            <div className="flex items-center justify-between px-4 py-3.5 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3.5 bg-white/[0.03] rounded-lg sm:rounded-xl border border-white/[0.06]">
               <div>
-                <p className="text-sm font-semibold text-slate-200">Active Status</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs sm:text-sm font-semibold text-slate-200">Active Status</p>
+                <p className="text-[9px] sm:text-[11px] text-slate-500 mt-0.5 line-clamp-1">
                   {form.isActive
                     ? "User can log in and access the system"
                     : "Account is deactivated — user cannot log in"}
@@ -605,10 +605,10 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
                 onClick={toggleActive}
                 role="switch"
                 aria-checked={form.isActive}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${form.isActive ? "bg-violet-600" : "bg-white/10"
+                className={`relative w-10 sm:w-11 h-5 sm:h-6 rounded-full transition-colors duration-200 shrink-0 ${form.isActive ? "bg-violet-600" : "bg-white/10"
                   }`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm
+                <span className={`absolute top-0.5 left-0.5 w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-white shadow-sm
                                   transition-transform duration-200 ${form.isActive ? "translate-x-5" : ""}`}
                 />
               </button>
@@ -616,21 +616,21 @@ export default function AddUserModal({ user, onClose, onSuccess }: AddUserModalP
           </div>
 
           {/* ── Footer ── */}
-          <div className="flex gap-2.5 px-6 py-4 border-t border-white/[0.06] shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 px-4 sm:px-6 py-3 sm:py-4 border-t border-white/[0.06] shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 text-sm font-medium rounded-xl border border-white/10 text-slate-300
-                         hover:bg-white/5 hover:text-white transition-all"
+              className="w-full sm:flex-1 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-white/10 text-slate-300
+                         hover:bg-white/5 hover:text-white transition-all order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-violet-600 hover:bg-violet-500
+              className="w-full sm:flex-1 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl bg-violet-600 hover:bg-violet-500
                          text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                         flex items-center justify-center gap-2 shadow-lg shadow-violet-900/30"
+                         flex items-center justify-center gap-2 shadow-lg shadow-violet-900/30 order-1 sm:order-2"
             >
               {loading
                 ? <><Spinner />{isEdit ? "Saving..." : "Creating..."}</>
@@ -669,14 +669,14 @@ function PasswordStrength({ password }: { password: string }) {
           />
         ))}
       </div>
-      <p className={`text-[10px] font-medium ${textColor}`}>{label}</p>
+      <p className={`text-[9px] sm:text-[10px] font-medium ${textColor}`}>{label}</p>
     </div>
   )
 }
 
 // ── Styled helpers ────────────────────────────────────────────────────────────
 const inputCls = (hasErr: boolean) =>
-  `w-full px-3.5 py-2.5 rounded-xl bg-[#0d0f1e] border text-sm text-slate-200
+  `w-full px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#0d0f1e] border text-xs sm:text-sm text-slate-200
    placeholder:text-slate-600 outline-none transition-all focus:ring-2 focus:ring-offset-0
    ${hasErr
     ? "border-red-500/60 focus:ring-red-500/25"
@@ -684,7 +684,7 @@ const inputCls = (hasErr: boolean) =>
   }`
 
 const selectCls =
-  `w-full px-3.5 py-2.5 rounded-xl bg-[#0d0f1e] border border-white/10 text-sm text-slate-200
+  `w-full px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#0d0f1e] border border-white/10 text-xs sm:text-sm text-slate-200
    outline-none transition-all cursor-pointer hover:border-white/20
    focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/50
    [&>option]:bg-[#13152a] [&>option]:text-slate-200`
@@ -700,18 +700,18 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1 sm:space-y-1.5">
       <label
         htmlFor={id}
-        className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider"
+        className="block text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider"
       >
         {label}
         {required && <span className="text-violet-400 ml-0.5">*</span>}
       </label>
       {children}
       {error && (
-        <p className="text-[11px] text-red-400 flex items-center gap-1 mt-1">
-          <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <p className="text-[10px] sm:text-[11px] text-red-400 flex items-center gap-1 mt-1">
+          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
           </svg>
@@ -724,11 +724,11 @@ function Field({
 
 // ── Micro components ──────────────────────────────────────────────────────────
 const Spinner = () => (
-  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+  <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
 )
 
 const EyeOn = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -738,7 +738,7 @@ const EyeOn = () => (
 )
 
 const EyeOff = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7
          a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243

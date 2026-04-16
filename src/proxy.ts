@@ -7,21 +7,18 @@ const PUBLIC_ROUTES = [
 ];
 
 export function proxy(req: NextRequest) {
-  console.log("PROXY RUNNING:", req.nextUrl.pathname);
-
   const { pathname } = req.nextUrl;
 
-  // Allow public routes
+  // ✅ Allow public routes
   if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Only protect /api routes
+  // ✅ Only protect /api routes
   if (!pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  // Get token
   const token = req.cookies.get('token')?.value;
 
   if (!token) {
@@ -32,8 +29,24 @@ export function proxy(req: NextRequest) {
   }
 
   try {
-    jwt.verify(token, process.env.JWT_SECRET!);
-    return NextResponse.next();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      id: number;
+      email: string;
+      role: string;
+    };
+
+    // ✅ Inject user into headers
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-user-id', String(decoded.id));
+    requestHeaders.set('x-user-email', decoded.email);
+    requestHeaders.set('x-user-role', decoded.role);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
   } catch {
     return NextResponse.json(
       { error: 'Invalid or expired token.' },
