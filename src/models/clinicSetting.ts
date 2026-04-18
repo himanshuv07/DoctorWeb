@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "@/lib/database";
-import models from ".";
 
 // 🔹 Attributes
 interface ClinicAttributes {
@@ -43,7 +42,7 @@ type ClinicCreationAttributes = Optional<
 >;
 
 // 🔹 Model Class
-class Clinics
+class ClinicsSetting
     extends Model<ClinicAttributes, ClinicCreationAttributes>
     implements ClinicAttributes {
     public id!: number;
@@ -68,12 +67,12 @@ class Clinics
 
     // ✅ MOVE INSIDE CLASS
     static associate(models: any) {
-        Clinics.belongsTo(models.User, {
+        ClinicsSetting.belongsTo(models.User, {
             foreignKey: "createdBy",
             as: "creator",
         });
 
-        Clinics.belongsTo(models.User, {
+        ClinicsSetting.belongsTo(models.User, {
             foreignKey: "updatedBy",
             as: "updater",
         });
@@ -81,7 +80,7 @@ class Clinics
 }
 
 // 🔹 Init
-Clinics.init(
+ClinicsSetting.init(
     {
         id: {
             type: DataTypes.INTEGER,
@@ -107,7 +106,7 @@ Clinics.init(
         },
 
         leaveDays: {
-            type: DataTypes.JSON,
+            type: DataTypes.JSON, 
             allowNull: true,
         },
 
@@ -154,10 +153,10 @@ Clinics.init(
     },
     {
         sequelize,
-        modelName: "Clinics",
-        tableName: "Clinics",
+        modelName: "Clinics_Setting",
+        tableName: "Clinics_Setting",
         timestamps: true,
     }
 );
 
-export default Clinics;
+export default ClinicsSetting;

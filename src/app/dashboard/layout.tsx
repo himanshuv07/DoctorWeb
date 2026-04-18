@@ -24,7 +24,7 @@ const navItems = [
   { label: 'Users',        href: '/dashboard/users',        icon: UserCog },
   { label: 'Duration',     href: '/dashboard/durations',     icon: CalendarClock },
   { label: 'Services',     href: '/dashboard/services',     icon: HandPlatter },
-  { label: 'Settings',     href: '/dashboard/settings',     icon: Settings },
+  { label: 'Settings',     href: '/dashboard/clinicSetting',     icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

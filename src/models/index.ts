@@ -1,41 +1,36 @@
 import sequelize from "@/lib/database";
-import Customer from "./Customer";
+import ClinicsSetting from "./clinicSetting";
+import Duration from "./duration";
+import Patient from "./patients";
 import User, { associateUser } from "./User";
-import UserService from "./UserService";
-import Service, { associateService } from "./Service";
-import Duration from "./Duration";
-import Patient from "./Patient";
-import Clinics from "./clinicSetting";
+import Service, { associateService } from "./services";
+import UserService from "./UserServices";
 
 const models: any = {
   sequelize,
-  Customer,
-  User,
+  User, 
   UserService,
   Service,
   Duration,
   Patient,
-  Clinics,
+  ClinicsSetting,
 };
 
-// ✅ Associations
+// Associations
 associateUser(models);
 associateService(models);
 Duration.associate(models);
 Patient.associate(models);
-
-// ❗ Safe call (won’t crash if not defined)
-Clinics.associate(models);
+ClinicsSetting.associate?.(models);
 
 export {
   sequelize,
-  Customer,
   User,
   UserService,
   Service,
   Duration,
   Patient,
-  Clinics,
+  ClinicsSetting,
 };
 
 export default models;
