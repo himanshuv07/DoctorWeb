@@ -5,6 +5,7 @@ import Patient from "./patients";
 import User, { associateUser } from "./User";
 import Service, { associateService } from "./services";
 import UserService from "./UserServices";
+import Leave from "./leaves";
 
 const models: any = {
   sequelize,
@@ -14,6 +15,7 @@ const models: any = {
   Duration,
   Patient,
   ClinicsSetting,
+  Leave,
 };
 
 // Associations
@@ -22,6 +24,7 @@ associateService(models);
 Duration.associate(models);
 Patient.associate(models);
 ClinicsSetting.associate?.(models);
+Leave.associate?.(models);
 
 export {
   sequelize,
@@ -31,6 +34,7 @@ export {
   Duration,
   Patient,
   ClinicsSetting,
+  Leave,
 };
 
 export default models;
