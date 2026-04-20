@@ -25,18 +25,18 @@ export async function GET(req: NextRequest, { params }: Params) {
         {
           model: User,
           as: "doctor",
-          attributes: ["id", "name"],
+          attributes: ["id", "fname", "lname"],
         },
         {
           model: User,
           as: "creator",
-          attributes: ["id", "name"],
+          attributes: ["id", "fname", "lname"],
         },
         {
           model: User,
           as: "updater",
-          attributes: ["id", "name"],
-        },
+          attributes: ["id", "fname", "lname"],
+        }
       ],
     });
 
@@ -133,9 +133,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     const updatedLeave = await Leave.findByPk(id, {
       include: [
-        { model: User, as: "doctor", attributes: ["id", "name"] },
-        { model: User, as: "creator", attributes: ["id", "name"] },
-        { model: User, as: "updater", attributes: ["id", "name"] },
+        { model: User, as: "doctor", attributes: ["id", "fname", "lname"] },
+        { model: User, as: "creator", attributes: ["id", "fname", "lname"] },
+        { model: User, as: "updater", attributes: ["id", "fname", "lname"] },
       ],
     });
 

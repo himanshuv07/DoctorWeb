@@ -63,7 +63,7 @@ class Leave
 
         Leave.belongsTo(models.User, {
             foreignKey: "created_by",
-            as: "creater",
+            as: "creator",
         });
 
         Leave.belongsTo(models.User, {

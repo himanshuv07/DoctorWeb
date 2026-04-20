@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Users, CalendarClock, Stethoscope,
   UserCog, Settings, ChevronLeft, ChevronRight, LogOut, Bell, Search,
   HandPlatter,
+  LeafIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ const navItems = [
   { label: 'Appointments', href: '/dashboard/appointments', icon: CalendarClock },
   { label: 'Doctors',      href: '/dashboard/doctors',      icon: Stethoscope },
   { label: 'Users',        href: '/dashboard/users',        icon: UserCog },
+  { label: 'Leaves',        href: '/dashboard/leaves',        icon: LeafIcon },
   { label: 'Duration',     href: '/dashboard/durations',     icon: CalendarClock },
   { label: 'Services',     href: '/dashboard/services',     icon: HandPlatter },
   { label: 'Settings',     href: '/dashboard/clinicSetting',     icon: Settings },

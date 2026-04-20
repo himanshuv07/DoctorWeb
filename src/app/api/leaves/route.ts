@@ -22,18 +22,18 @@ export async function GET(req: NextRequest) {
         {
           model: User,
           as: "doctor",
-          attributes: ["id", "name"],
+          attributes: ["id", "fname", "lname"],
         },
         {
           model: User,
           as: "creator",
-          attributes: ["id", "name"],
+          attributes: ["id", "fname", "lname"],
         },
         {
           model: User,
           as: "updater",
-          attributes: ["id", "name"],
-        },
+          attributes: ["id", "fname", "lname"],
+        }
       ],
       order: [["id", "DESC"]],
     });
@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
+    console.error("LEAVES GET ERROR:", error); // 👈 add this
     return NextResponse.json(
       {
         success: false,
@@ -119,9 +120,9 @@ export async function POST(req: NextRequest) {
 
     const newLeave = await Leave.findByPk(leave.id, {
       include: [
-        { model: User, as: "doctor", attributes: ["id", "name"] },
-        { model: User, as: "creator", attributes: ["id", "name"] },
-        { model: User, as: "updater", attributes: ["id", "name"] },
+        { model: User, as: "doctor", attributes: ["id", "fname", "lname"] },
+        { model: User, as: "creator", attributes: ["id", "fname", "lname"] },
+        { model: User, as: "updater", attributes: ["id", "fname", "lname"] },
       ],
     });
 
