@@ -106,7 +106,7 @@ ClinicsSetting.init(
         },
 
         leaveDays: {
-            type: DataTypes.JSON, 
+            type: DataTypes.JSON,
             allowNull: true,
         },
 
@@ -153,8 +153,8 @@ ClinicsSetting.init(
     },
     {
         sequelize,
-        modelName: "Clinics_Setting",
-        tableName: "Clinics_Setting",
+        modelName: "clinics_setting",
+        tableName: "clinics_setting",
         timestamps: true,
     }
 );

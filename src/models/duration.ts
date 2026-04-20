@@ -1,98 +1,68 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../lib/database";
 
-class Leave extends Model {
+interface DurationAttributes {
+  id: number;
+  value: number;
+  createdBy: number;
+  updatedBy?: number | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+}
+
+type DurationCreationAttributes = Optional<
+  DurationAttributes,
+  "id" | "updatedBy" | "createdAt" | "updatedAt" | "deletedAt"
+>;
+
+class Duration
+  extends Model<DurationAttributes, DurationCreationAttributes>
+  implements DurationAttributes
+{
   declare id: number;
-
-  declare leave_startDate: string;
-  declare leave_endDate: string;
-
-  declare status: "enabled" | "disabled";
-
-  declare created_by: number;
-  declare updated_by: number | null;
-  declare user_id: number;
-
-  declare remark: string | null;
-
-  declare deletedAt: Date | null;
-
-  // timestamps
+  declare value: number;
+  declare createdBy: number;
+  declare updatedBy: number | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
+  declare readonly deletedAt: Date | null;
 
   static associate(models: any) {
-    Leave.belongsTo(models.User, {
-      as: "doctor",
-      foreignKey: "user_id",
-    });
-
-    Leave.belongsTo(models.User, {
-      as: "creator", // fixed typo from "creater"
-      foreignKey: "created_by",
-    });
-
-    Leave.belongsTo(models.User, {
-      as: "updater",
-      foreignKey: "updated_by",
+    Duration.hasMany(models.Service, {
+      foreignKey: "durationId",
+      as: "services",
     });
   }
 }
 
-Leave.init(
+Duration.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-
-    leave_startDate: {
-      type: DataTypes.DATEONLY,
+    value: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      unique: true,
     },
-
-    leave_endDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
-    },
-
-    status: {
-      type: DataTypes.ENUM("enabled", "disabled"),
-      defaultValue: "enabled",
-    },
-
-    created_by: {
+    createdBy: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-
-    updated_by: {
+    updatedBy: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-
-    remark: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    deletedAt: {
-      type: DataTypes.DATE,
       allowNull: true,
     },
   },
   {
     sequelize,
-    tableName: "Leaves",
+    tableName: "durations",   // ✅ matches your exact DB table name
     timestamps: true,
-    paranoid: true, // soft delete
+    paranoid: true,
   }
 );
 
-export default Leave;
+export default Duration;
