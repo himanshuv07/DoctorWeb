@@ -40,9 +40,9 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 
     // ✅ Authorization
-    if (user.role !== "Admin" && patient.createdBy !== user.id) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
-    }
+    // if (user.role !== "Admin" && patient.createdBy !== user.id) {
+    //   return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+    // }
 
     return NextResponse.json(
       {

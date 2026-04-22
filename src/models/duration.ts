@@ -59,7 +59,7 @@ Duration.init(
   },
   {
     sequelize,
-    tableName: "durations",   // ✅ matches your exact DB table name
+    tableName: "durations",
     timestamps: true,
     paranoid: true,
   }

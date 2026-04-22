@@ -210,6 +210,21 @@ export default function LeavesPage() {
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [toasts, setToasts] = useState<Toast[]>([]);
 
+    // ── Calculate leave days ─────────────────────────────────────────────────────
+    const leaveDays = useMemo(() => {
+        if (!formData.leave_startDate || !formData.leave_endDate) return "";
+
+        const start = new Date(formData.leave_startDate);
+        const end = new Date(formData.leave_endDate);
+
+        if (end < start) return "";
+
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+        return diffDays;
+    }, [formData.leave_startDate, formData.leave_endDate]);
+
     // ── Toasts ─────────────────────────────────────────────────────────────────
     const addToast = useCallback((type: ToastType, title: string, message: string) => {
         const id = ++_toastId;
@@ -220,6 +235,36 @@ export default function LeavesPage() {
     const removeToast = useCallback((id: number) => {
         setToasts((p) => p.filter((t) => t.id !== id));
     }, []);
+
+    // ── Fetch users for dropdown ─────────────────────────────────────────────────
+    const [users, setUsers] = useState<UserRef[]>([]);
+    const [userSearch, setUserSearch] = useState("");
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+    const fetchUsers = useCallback(async () => {
+        try {
+            const res = await axios.get("/users");
+            console.log("USERS API:", res.data); // 👈 ADD THIS
+            setUsers(res.data?.users || []);
+        } catch {
+            addToast("error", "Error", "Failed to fetch users.");
+        }
+    }, [addToast]);
+
+    // ── Filter users for dropdown ─────────────────────────────────────────────────
+    const filteredUsers = useMemo(() => {
+        const q = userSearch.trim().toLowerCase();
+
+        if (!q) return users;
+
+        return users.filter((u) =>
+            `${u.fname} ${u.lname}`.toLowerCase().includes(q)
+        );
+    }, [users, userSearch]);
+
+    // ✅ log AFTER it's created
+    console.log("SEARCH:", userSearch);
+    console.log("FILTERED:", filteredUsers);
 
     // ── Fetch ──────────────────────────────────────────────────────────────────
     const fetchLeaves = useCallback(async () => {
@@ -235,7 +280,10 @@ export default function LeavesPage() {
         }
     }, []);
 
-    useEffect(() => { fetchLeaves(); }, [fetchLeaves]);
+    useEffect(() => {
+        fetchLeaves();
+        fetchUsers();
+    }, [fetchLeaves, fetchUsers]);
 
     // ── Filter + paginate ──────────────────────────────────────────────────────
     const filtered = useMemo(() => {
@@ -661,21 +709,52 @@ export default function LeavesPage() {
                         <div className="overflow-y-auto flex-1 px-4 sm:px-5 py-4 sm:py-5 space-y-4">
 
                             {/* Doctor ID */}
-                            <div>
+                            <div className="relative">
                                 <label className="mb-1.5 block text-xs sm:text-sm font-medium text-slate-300">
-                                    Doctor ID <span className="text-red-400">*</span>
+                                    Doctor <span className="text-red-400">*</span>
                                 </label>
+
                                 <input
-                                    type="number" name="user_id" value={formData.user_id}
-                                    onChange={handleChange} placeholder="e.g. 1"
-                                    disabled={!!editingLeave}
-                                    className={`w-full rounded-lg sm:rounded-xl border bg-[#141a2f] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white outline-none placeholder:text-slate-600 transition-all ${fieldErrors.user_id
-                                        ? "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
-                                        : "border-white/10 focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/15"
-                                        } ${editingLeave ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    type="text"
+                                    value={userSearch}
+                                    onChange={(e) => {
+                                        setUserSearch(e.target.value);
+                                        setShowUserDropdown(true);
+                                    }}
+                                    onBlur={() => {
+                                        setTimeout(() => setShowUserDropdown(false), 200);
+                                    }}
+                                    onFocus={() => setShowUserDropdown(true)}
+                                    placeholder="Search doctor..."
+                                    className="w-full rounded-lg sm:rounded-xl border border-white/10 bg-[#141a2f] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/15"
                                 />
+
+                                {/* Dropdown */}
+                                {showUserDropdown && (
+                                    <div className="absolute z-[9999] mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-[#141a2f] shadow-lg">
+                                        {filteredUsers.length === 0 ? (
+                                            <div className="px-3 py-2 text-xs text-slate-500">
+                                                No users found
+                                            </div>
+                                        ) : (
+                                            filteredUsers.map((u) => (
+                                                <div
+                                                    key={u.id}
+                                                    onClick={() => {
+                                                        setFormData((p) => ({ ...p, user_id: String(u.id) }));
+                                                        setUserSearch(`${u.fname} ${u.lname}`);
+                                                        setShowUserDropdown(false);
+                                                    }}
+                                                    className="px-3 py-2 text-xs sm:text-sm text-slate-300 hover:bg-violet-500/20 cursor-pointer"
+                                                >
+                                                    {u.fname} {u.lname}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+
                                 <FieldError message={fieldErrors.user_id} />
-                                {editingLeave && <p className="mt-1 text-[10px] text-slate-600">Doctor cannot be changed after creation.</p>}
                             </div>
 
                             {/* Date row */}
@@ -709,6 +788,20 @@ export default function LeavesPage() {
                                             }`}
                                     />
                                     <FieldError message={fieldErrors.leave_endDate} />
+                                </div>
+
+                                {/* Total leave days (calculated) */}
+                                <div>
+                                    <label className="mb-1.5 block text-xs sm:text-sm font-medium text-slate-300">
+                                        Total Leave Days
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={leaveDays ? `${leaveDays} day${leaveDays > 1 ? "s" : ""}` : ""}
+                                        readOnly
+                                        placeholder="Auto calculated"
+                                        className="w-full rounded-lg sm:rounded-xl border border-white/10 bg-[#141a2f] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-400 outline-none cursor-not-allowed"
+                                    />
                                 </div>
                             </div>
 

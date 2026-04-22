@@ -90,7 +90,7 @@ export default function ServicesPage() {
     try {
       setLoading(true)
       setError(null)
-      const res = await axios.get("/api/services")
+      const res = await axios.get("/services")
       setServices(res.data.data || [])
     } catch (err) {
       setError("Failed to fetch services. Please try again.")
@@ -103,7 +103,7 @@ export default function ServicesPage() {
 
   const fetchDurations = useCallback(async () => {
     try {
-      const res = await axios.get("/api/duration")
+      const res = await axios.get("/duration")
       setDurations(res.data.data || [])
     } catch (err) {
       console.error(err)
@@ -245,7 +245,7 @@ export default function ServicesPage() {
       }
 
       if (editingService) {
-        await axios.put(`/api/services/${editingService.id}`, {
+        await axios.put(`/services/${editingService.id}`, {
           name: payload.name,
           price: payload.price,
           durationId: payload.durationId,
@@ -253,7 +253,7 @@ export default function ServicesPage() {
         })
         toast.success("Service updated successfully")
       } else {
-        await axios.post("/api/services", payload)
+        await axios.post("/services", payload)
         toast.success("Service created successfully")
       }
 

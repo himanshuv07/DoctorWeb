@@ -1,33 +1,55 @@
 import axios from "axios"
+import { toast } from "react-hot-toast"
 
-const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api",
-  withCredentials: true,
-  headers: { "Content-Type": "application/json" },
-})
+// ✅ Set global defaults
+axios.defaults.baseURL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api"
 
-// ── Request interceptor: attach token ──
-API.interceptors.request.use(
+axios.defaults.withCredentials = true
+axios.defaults.headers.common["Content-Type"] = "application/json"
+
+// ── Request interceptor ──
+axios.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token")
-      if (token) config.headers.Authorization = `Bearer ${token}`
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
     return config
   },
   (error) => Promise.reject(error)
 )
 
-// ── Response interceptor: handle 401 ──
-API.interceptors.response.use(
+// ── Response interceptor ──
+let isRedirecting = false
+
+axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("token")
-      window.location.href = "/login"
+    if (typeof window !== "undefined") {
+      const status = error.response?.status
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Session expired. Please login again."
+
+      if (status === 401 && !isRedirecting) {
+        isRedirecting = true
+
+        localStorage.removeItem("token")
+
+        toast.error(message)
+
+        setTimeout(() => {
+          window.location.href = "/login"
+        }, 1200)
+      } 
     }
+
     return Promise.reject(error)
   }
 )
 
-export default API
+export default axios
