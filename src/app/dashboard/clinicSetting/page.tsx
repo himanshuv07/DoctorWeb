@@ -40,31 +40,32 @@ const DAYS_OF_WEEK = [
   "thursday", "friday", "saturday",
 ];
 
+
 const TIMEZONES = [
-  { value: "Asia/Kolkata",       label: "(GMT+5:30) Chennai, Kolkata, Mumbai, New Delhi" },
-  { value: "America/New_York",   label: "(GMT-5:00) Eastern Time (US & Canada)" },
-  { value: "America/Chicago",    label: "(GMT-6:00) Central Time (US & Canada)" },
-  { value: "America/Denver",     label: "(GMT-7:00) Mountain Time (US & Canada)" },
-  { value: "America/Los_Angeles",label: "(GMT-8:00) Pacific Time (US & Canada)" },
-  { value: "Europe/London",      label: "(GMT+0:00) London, Edinburgh, Dublin" },
-  { value: "Europe/Paris",       label: "(GMT+1:00) Paris, Berlin, Rome, Madrid" },
-  { value: "Asia/Dubai",         label: "(GMT+4:00) Abu Dhabi, Muscat" },
-  { value: "Asia/Singapore",     label: "(GMT+8:00) Singapore, Kuala Lumpur" },
-  { value: "Asia/Tokyo",         label: "(GMT+9:00) Tokyo, Osaka, Sapporo" },
-  { value: "Australia/Sydney",   label: "(GMT+10:00) Sydney, Melbourne" },
+  { value: "Asia/Kolkata", label: "(GMT+5:30) Chennai, Kolkata, Mumbai, New Delhi" },
+  { value: "America/New_York", label: "(GMT-5:00) Eastern Time (US & Canada)" },
+  { value: "America/Chicago", label: "(GMT-6:00) Central Time (US & Canada)" },
+  { value: "America/Denver", label: "(GMT-7:00) Mountain Time (US & Canada)" },
+  { value: "America/Los_Angeles", label: "(GMT-8:00) Pacific Time (US & Canada)" },
+  { value: "Europe/London", label: "(GMT+0:00) London, Edinburgh, Dublin" },
+  { value: "Europe/Paris", label: "(GMT+1:00) Paris, Berlin, Rome, Madrid" },
+  { value: "Asia/Dubai", label: "(GMT+4:00) Abu Dhabi, Muscat" },
+  { value: "Asia/Singapore", label: "(GMT+8:00) Singapore, Kuala Lumpur" },
+  { value: "Asia/Tokyo", label: "(GMT+9:00) Tokyo, Osaka, Sapporo" },
+  { value: "Australia/Sydney", label: "(GMT+10:00) Sydney, Melbourne" },
 ];
 
 const initialForm: FormDataType = {
-  clinicName:   "",
-  logo:         "",
-  startDay:     "sunday",
-  leaveDays:    [],
-  timezone:     "Asia/Kolkata",
+  clinicName: "",
+  logo: "",
+  startDay: "sunday",
+  leaveDays: [],
+  timezone: "Asia/Kolkata",
   smtpUsername: "",
   smtpPassword: "",
-  smtpHost:     "",
-  smtpPort:     "587",
-  smtpTls:      false,
+  smtpHost: "",
+  smtpPort: "587",
+  smtpTls: false,
 };
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -132,15 +133,15 @@ let _toastId = 0;
 
 const TOAST_STYLES: Record<ToastType, { bg: string; border: string; icon: string; title: string; progress: string }> = {
   success: { bg: "bg-[#0a1f12]", border: "border-emerald-600/60", icon: "text-emerald-400", title: "text-emerald-300", progress: "bg-emerald-500" },
-  error:   { bg: "bg-[#1f0a0a]", border: "border-red-600/60",     icon: "text-red-400",     title: "text-red-300",     progress: "bg-red-500"     },
-  warning: { bg: "bg-[#1f1500]", border: "border-amber-500/60",   icon: "text-amber-400",   title: "text-amber-300",   progress: "bg-amber-500"   },
-  info:    { bg: "bg-[#0a1020]", border: "border-violet-500/60",  icon: "text-violet-400",  title: "text-violet-300",  progress: "bg-violet-500"  },
+  error: { bg: "bg-[#1f0a0a]", border: "border-red-600/60", icon: "text-red-400", title: "text-red-300", progress: "bg-red-500" },
+  warning: { bg: "bg-[#1f1500]", border: "border-amber-500/60", icon: "text-amber-400", title: "text-amber-300", progress: "bg-amber-500" },
+  info: { bg: "bg-[#0a1020]", border: "border-violet-500/60", icon: "text-violet-400", title: "text-violet-300", progress: "bg-violet-500" },
 };
 
 function ToastIcon({ type }: { type: ToastType }) {
   const cls = "w-4 h-4 flex-shrink-0";
   if (type === "success") return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-  if (type === "error")   return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+  if (type === "error") return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
   if (type === "warning") return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>;
   return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 }
@@ -184,9 +185,9 @@ function FieldError({ message }: { message?: string }) {
 
 // ─── Input primitives ─────────────────────────────────────────────────────────
 
-const inputBase  = "w-full rounded-xl border bg-[#141a2f] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 transition-all";
-const inputOk    = "border-white/10 focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/15";
-const inputBad   = "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15";
+const inputBase = "w-full rounded-xl border bg-[#141a2f] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 transition-all";
+const inputOk = "border-white/10 focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/15";
+const inputBad = "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15";
 
 function TextInput({ name, value, onChange, placeholder, type = "text", error, disabled }: {
   name: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -237,16 +238,17 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
 export default function ClinicSettingPage() {
   // ✅ clinicId is the source of truth for whether a record exists.
   // Once set to a number it never goes null again — locks submit to PUT only.
-  const [clinicId, setClinicId]           = useState<number | null>(null);
-  const [loading, setLoading]             = useState(true);
+  const [clinicId, setClinicId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [pageError, setPageError]         = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors]     = useState<FieldErrors>({});
-  const [toasts, setToasts]               = useState<Toast[]>([]);
-  const [formData, setFormData]           = useState<FormDataType>(initialForm);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [formData, setFormData] = useState<FormDataType>(initialForm);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
-  const [logoError, setLogoError]         = useState(false);
-  const toastTimers                       = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const [logoError, setLogoError] = useState(false);
+  const toastTimers = useRef<Map<number, NodeJS.Timeout>>(new Map());
+
 
   // ── Toasts ─────────────────────────────────────────────────────────────────
   const addToast = useCallback((type: ToastType, title: string, message: string) => {
@@ -279,17 +281,17 @@ export default function ClinicSettingPage() {
         // ✅ Persist the id — once set, submit will always PUT
         setClinicId(data.id);
         setFormData({
-          clinicName:   data.clinicName          ?? "",
-          logo:         data.logo                ?? "",
-          startDay:     data.startDay            ?? "sunday",
-          leaveDays:    data.leaveDays           ?? [],
-          timezone:     data.timezone            ?? "Asia/Kolkata",
+          clinicName: data.clinicName ?? "",
+          logo: data.logo ?? "",
+          startDay: data.startDay ?? "sunday",
+          leaveDays: data.leaveDays ?? [],
+          timezone: data.timezone ?? "Asia/Kolkata",
           // ✅ Read flat fields directly — no data.smtp.username
-          smtpUsername: data.smtpUsername        ?? "",
-          smtpPassword: data.smtpPassword        ?? "",
-          smtpHost:     data.smtpHost            ?? "",
-          smtpPort:     String(data.smtpPort     ?? 587),
-          smtpTls:      data.smtpTls             ?? false,
+          smtpUsername: data.smtpUsername ?? "",
+          smtpPassword: data.smtpPassword ?? "",
+          smtpHost: data.smtpHost ?? "",
+          smtpPort: String(data.smtpPort ?? 587),
+          smtpTls: data.smtpTls ?? false,
         });
       }
       // If data is null the form stays at initialForm — user will POST once
@@ -300,10 +302,32 @@ export default function ClinicSettingPage() {
     }
   }, []);
 
+  // ─── Time zones ─────────────────────────────────────────────────────────────────
+  const [timezones, setTimezones] = useState<{ value: string; label: string }[]>([]);
+
+  const fetchTimezones = useCallback(async () => {
+  try {
+    const res = await fetch("https://timeapi.io/api/TimeZone/AvailableTimeZones");
+    const data = await res.json();
+
+    const formatted = data.map((tz: string) => ({
+      value: tz,
+      label: tz.replace("_", " "),
+    }));
+
+    setTimezones(formatted);
+  } catch (err) {
+    console.error(err);
+    addToast("error", "Failed", "Could not load timezones");
+  }
+}, [addToast]);
+
+
   useEffect(() => {
     fetchClinic();
+    fetchTimezones();
     return () => { toastTimers.current.forEach(clearTimeout); };
-  }, [fetchClinic]);
+  }, [fetchClinic, fetchTimezones]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -336,16 +360,16 @@ export default function ClinicSettingPage() {
 
     // ✅ Always flat payload — matches both POST and PUT backend field names
     const payload = {
-      clinicName:   formData.clinicName.trim(),
-      logo:         formData.logo.trim()      || null,
-      startDay:     formData.startDay,
-      leaveDays:    formData.leaveDays,
-      timezone:     formData.timezone,
+      clinicName: formData.clinicName.trim(),
+      logo: formData.logo.trim() || null,
+      startDay: formData.startDay,
+      leaveDays: formData.leaveDays,
+      timezone: formData.timezone,
       smtpUsername: formData.smtpUsername.trim() || null,
-      smtpPassword: formData.smtpPassword        || null,
-      smtpHost:     formData.smtpHost.trim()     || null,
-      smtpPort:     formData.smtpPort ? Number(formData.smtpPort) : null,
-      smtpTls:      formData.smtpTls,
+      smtpPassword: formData.smtpPassword || null,
+      smtpHost: formData.smtpHost.trim() || null,
+      smtpPort: formData.smtpPort ? Number(formData.smtpPort) : null,
+      smtpTls: formData.smtpTls,
     };
 
     try {
@@ -410,7 +434,7 @@ export default function ClinicSettingPage() {
     );
   }
 
-  const smtpHasError = (["smtpUsername","smtpPassword","smtpHost","smtpPort"] as const).some((k) => fieldErrors[k]);
+  const smtpHasError = (["smtpUsername", "smtpPassword", "smtpHost", "smtpPort"] as const).some((k) => fieldErrors[k]);
 
   const IconClinic = (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -496,7 +520,7 @@ export default function ClinicSettingPage() {
                 <div>
                   <FieldLabel required>Timezone</FieldLabel>
                   <SelectInput name="timezone" value={formData.timezone} onChange={handleChange}>
-                    {TIMEZONES.map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
+                    {(timezones.length ? timezones : TIMEZONES).map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
                   </SelectInput>
                 </div>
               </div>

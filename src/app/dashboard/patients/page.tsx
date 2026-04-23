@@ -348,6 +348,7 @@ const PatientModal = ({
                                 name="phone"
                                 placeholder="Phone Number"
                                 value={formData.phone}
+                                maxLength={10}
                                 onChange={handleChange}
                                 className={inputClass("phone")}
                             />
