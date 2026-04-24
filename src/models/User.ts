@@ -12,6 +12,10 @@ interface UserAttributes {
   role: "doctor" | "staff" | "admin";
   address?: string;
   isActive?: boolean;
+
+  createdBy?: number;   // ✅ ADD
+  updatedBy?: number;   // ✅ ADD
+
   deletedAt?: Date | null;
 }
 
@@ -46,6 +50,15 @@ User.init(
     address: { type: DataTypes.STRING, allowNull: true },
     isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
     deletedAt: { type: DataTypes.DATE, allowNull: true },
+    createdBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    updatedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     sequelize,
@@ -64,11 +77,11 @@ export const associateUser = (models: any) => {
     as: "Services",
   });
 
-  // User.hasOne(models.DoctorDetails, {
-  //   foreignKey: "userId",
-  //   as: "DoctorDetail1",
-  //   onDelete: "CASCADE",
-  // });
+  User.hasOne(models.DoctorDetails, {
+    foreignKey: "userId",
+    as: "DoctorDetail1",
+    onDelete: "CASCADE",
+  });
 };
 
 export default User;

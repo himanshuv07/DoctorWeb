@@ -6,16 +6,18 @@ import User, { associateUser } from "./User";
 import Service, { associateService } from "./services";
 import UserService from "./UserServices";
 import Leave from "./leaves";
+import DoctorDetails, { associateDoctorDetails } from "./doctorDetails";
 
 const models: any = {
   sequelize,
-  User, 
+  User,
   UserService,
   Service,
   Duration,
   Patient,
   ClinicsSetting,
   Leave,
+  DoctorDetails,
 };
 
 // Associations
@@ -25,6 +27,7 @@ Duration.associate(models);
 Patient.associate(models);
 ClinicsSetting.associate?.(models);
 Leave.associate?.(models);
+associateDoctorDetails(models);
 
 export {
   sequelize,
@@ -35,6 +38,7 @@ export {
   Patient,
   ClinicsSetting,
   Leave,
+  DoctorDetails,
 };
 
 export default models;
