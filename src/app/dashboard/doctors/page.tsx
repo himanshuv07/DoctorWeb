@@ -298,19 +298,6 @@ function ListView({
                                         </tr>
                                     ))
                                 )}
-                                {/* Repeat header at bottom like the image */}
-                                {paginated.length > 0 && (
-                                    <tr className="bg-[#0f1117] border-t border-white/[0.06]">
-                                        <td className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Doctor Name</td>
-                                        <td className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Speciality</td>
-                                        {visibleDays.map((d) => (
-                                            <td key={d} className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                                                {DAY_LABELS[d]}
-                                            </td>
-                                        ))}
-                                        <td className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Action</td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>
