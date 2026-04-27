@@ -331,8 +331,8 @@ function ListView({
                                             key={p}
                                             onClick={() => setPage(p as number)}
                                             className={`w-7 h-7 text-[10px] font-semibold rounded-lg transition-all ${page === p
-                                                    ? "bg-violet-600 text-white shadow-lg shadow-violet-500/20"
-                                                    : "text-slate-400 hover:text-white border border-white/[0.08] hover:border-white/20"
+                                                ? "bg-violet-600 text-white shadow-lg shadow-violet-500/20"
+                                                : "text-slate-400 hover:text-white border border-white/[0.08] hover:border-white/20"
                                                 }`}
                                         >
                                             {p}
@@ -368,32 +368,78 @@ function EditView({
     const [form, setForm] = useState<EditFormState>(() => buildDefaultForm(doctor))
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState<string | null>(null)
+    const [fieldErrors, setFieldErrors] = useState<any>({})
 
-    function setDay(day: DayKey, field: keyof EditDayState, value: boolean | string) {
-        setForm((prev) => ({
-            ...prev,
-            [day]: { ...prev[day], [field]: value },
-        }))
-    }
+    const setDay = (day: string, field: string, value: any) => {
+    setForm((prev: any) => ({
+        ...prev,
+        [day]: {
+            ...prev[day],
+            [field]: value
+        }
+    }))
+
+    const key = `${day}.${field}`
+
+    setFieldErrors((prev: any) => {
+        if (!prev[key]) return prev
+        const copy = { ...prev }
+        delete copy[key]
+        return copy
+    })
+}
 
     async function handleSubmit() {
         setSaving(true)
         setSaveError(null)
+
+        const newErrors: any = {}
+
+        // ✅ validate BEFORE API call
+        for (const day of DAY_KEYS) {
+            const d = form[day]
+
+            if (d.isAvailable) {
+                if (!d.startTime) {
+                    newErrors[`${day}.startTime`] = "Start time is required"
+                }
+                if (!d.endTime) {
+                    newErrors[`${day}.endTime`] = "End time is required"
+                }
+
+                if (d.startTime && d.endTime && d.endTime <= d.startTime) {
+                    newErrors[`${day}.endTime`] = "End time must be after start time"
+                }
+            }
+        }
+
+        // 🚫 stop submit if errors exist
+        if (Object.keys(newErrors).length > 0) {
+            setFieldErrors(newErrors)
+            setSaving(false)
+            return
+        }
+
         try {
             const payload: Record<string, any> = {}
+
             for (const day of DAY_KEYS) {
                 const d = form[day]
                 payload[day] = {
                     isAvailable: d.isAvailable,
-                    startTime: d.isAvailable && d.startTime ? d.startTime : null,
-                    endTime: d.isAvailable && d.endTime ? d.endTime : null,
+                    startTime: d.isAvailable ? d.startTime : null,
+                    endTime: d.isAvailable ? d.endTime : null,
                 }
             }
+
             await API.put(`/timetable/${doctor.id}`, payload)
+
+            setFieldErrors({})
             onSuccess()
+
         } catch (err: any) {
+            // ❌ REMOVE global error usage for validation
             setSaveError(
-                err?.response?.data?.errors?.[0] ||
                 err?.response?.data?.error ||
                 "Failed to update timetable."
             )
@@ -471,15 +517,25 @@ function EditView({
                     <div className="space-y-4">
                         {DAY_KEYS.map((day) => {
                             const d = form[day]
+
+                            const startError = fieldErrors[`${day}.startTime`]
+                            const endError = fieldErrors[`${day}.endTime`]
+
                             return (
                                 <div key={day} className="rounded-xl border border-white/[0.05] bg-[#0f1117]/60 overflow-hidden">
+
                                     {/* Day Header */}
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
-                                        <span className="text-sm font-semibold text-slate-200">{DAY_LABELS[day]}</span>
+                                        <span className="text-sm font-semibold text-slate-200">
+                                            {DAY_LABELS[day]}
+                                        </span>
+
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-[10px] font-medium ${d.isAvailable ? "text-emerald-400" : "text-slate-500"}`}>
+                                            <span className={`text-[10px] font-medium ${d.isAvailable ? "text-emerald-400" : "text-slate-500"
+                                                }`}>
                                                 {d.isAvailable ? "Available" : "Not Available"}
                                             </span>
+
                                             <Toggle
                                                 checked={d.isAvailable}
                                                 onChange={(v) => setDay(day, "isAvailable", v)}
@@ -490,33 +546,55 @@ function EditView({
                                     {/* Time Inputs */}
                                     <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 transition-opacity duration-200 ${d.isAvailable ? "opacity-100" : "opacity-40 pointer-events-none"
                                         }`}>
+
+                                        {/* Start Time */}
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
                                                 Start Time
                                             </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="time"
-                                                    value={d.startTime}
-                                                    onChange={(e) => setDay(day, "startTime", e.target.value)}
-                                                    disabled={!d.isAvailable}
-                                                    className="w-full px-4 py-2.5 bg-[#1a1d2e] border border-white/[0.08] rounded-xl text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500/40 focus:border-violet-500/40 transition-all disabled:cursor-not-allowed [color-scheme:dark]"
-                                                />
-                                            </div>
+
+                                            <input
+                                                type="time"
+                                                value={d.startTime}
+                                                onChange={(e) => setDay(day, "startTime", e.target.value)}
+                                                disabled={!d.isAvailable}
+                                                className={`w-full px-4 py-2.5 bg-[#1a1d2e] border rounded-xl text-sm text-slate-300 outline-none transition-all [color-scheme:dark]
+                                ${startError
+                                                        ? "border-red-500 focus:ring-1 focus:ring-red-500"
+                                                        : "border-white/[0.08] focus:ring-1 focus:ring-violet-500/40 focus:border-violet-500/40"
+                                                    }`}
+                                            />
+
+                                            {startError && (
+                                                <p className="text-red-400 text-[11px] flex items-center gap-1">
+                                                    ⚠ {startError}
+                                                </p>
+                                            )}
                                         </div>
+
+                                        {/* End Time */}
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
                                                 End Time
                                             </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="time"
-                                                    value={d.endTime}
-                                                    onChange={(e) => setDay(day, "endTime", e.target.value)}
-                                                    disabled={!d.isAvailable}
-                                                    className="w-full px-4 py-2.5 bg-[#1a1d2e] border border-white/[0.08] rounded-xl text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500/40 focus:border-violet-500/40 transition-all disabled:cursor-not-allowed [color-scheme:dark]"
-                                                />
-                                            </div>
+
+                                            <input
+                                                type="time"
+                                                value={d.endTime}
+                                                onChange={(e) => setDay(day, "endTime", e.target.value)}
+                                                disabled={!d.isAvailable}
+                                                className={`w-full px-4 py-2.5 bg-[#1a1d2e] border rounded-xl text-sm text-slate-300 outline-none transition-all [color-scheme:dark]
+                                ${endError
+                                                        ? "border-red-500 focus:ring-1 focus:ring-red-500"
+                                                        : "border-white/[0.08] focus:ring-1 focus:ring-violet-500/40 focus:border-violet-500/40"
+                                                    }`}
+                                            />
+
+                                            {endError && (
+                                                <p className="text-red-400 text-[11px] flex items-center gap-1">
+                                                    ⚠ {endError}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -525,7 +603,7 @@ function EditView({
                     </div>
 
                     {/* Save Error */}
-                    {saveError && (
+                    {/* {saveError && (
                         <div className="flex items-center gap-2.5 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl">
                             <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -533,7 +611,7 @@ function EditView({
                             </svg>
                             <p className="text-xs text-red-400">{saveError}</p>
                         </div>
-                    )}
+                    )} */}
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-3 pt-2">
